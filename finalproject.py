@@ -22,7 +22,7 @@ def main():
 
     if pos_key:
         print("Reverse geocoding crime locations...")
-        geocode_and_attach_locations(conn, pos_key)
+        geocode_and_attach_locations(conn, "YOUR_POSITIONSTACK_KEY_HERE")
     else:
         print("No POSITIONSTACK_API_KEY provided.")
 
