@@ -14,23 +14,14 @@ DATES = ["2023-09-01", "2023-09-02", "2023-09-03"]
 def main():
     conn_path, conn = set_up_database()
 
-    pos_key = os.environ.get("POSITIONSTACK_API_KEY")
-    owm_key = os.environ.get("OPENWEATHER_API_KEY")
-
     print("Fetching UK crimes...")
     fetch_and_store_crimes(conn, LAT, LON, MONTH)
 
-    if pos_key:
-        print("Reverse geocoding crime locations...")
-        geocode_and_attach_locations(conn, pos_key)
-    else:
-        print("No POSITIONSTACK_API_KEY provided.")
+    print("Reverse geocoding crime locations...")
+    geocode_and_attach_locations(conn)
 
-    if owm_key:
-        print("Fetching weather...")
-        fetch_weather_for_all_locations(conn, owm_key, DATES)
-    else:
-        print("No OPENWEATHER_API_KEY provided.")
+    print("Fetching weather...")
+    fetch_weather_for_all_locations(conn, dates=DATES)
 
     print("Generating visualizations...")
     run_visualizations(conn)
