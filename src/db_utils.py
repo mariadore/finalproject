@@ -1,11 +1,14 @@
 import sqlite3
 import os
+from typing import Tuple
 
 DB_NAME= 'crime_weather.db'
 
-def set_up_database(db_name: str= DB_NAME):
+def set_up_database(db_name: str= DB_NAME)-> Tuple[str, sqlite3.Connection]:
     base_dir=os.path.dirname(os.path.abspath(__file__))
-    db_path= os.path.join(base_dir, db_name)
+    data_dir=os.path.join(base_dir, "data")
+    os.makedirs(data_dir, exist_ok=True)
+    db_path= os.path.join(data_dir, db_name)
     conn= sqlite3.connect(db_path)
     cur= conn.cursor()
     cur.execute("""
@@ -24,6 +27,19 @@ def set_up_database(db_name: str= DB_NAME):
             location_id INTEGER
         )
     """)
+    
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS LocationData (
+        location_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        city TEXT,
+        county TEXT,
+        region TEXT,
+        lat REAL,
+        lon REAL,
+        label TEXT UNIQUE
+    );
+    """)
+
                 
                 
     
