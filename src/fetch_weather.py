@@ -3,7 +3,7 @@ import time
 from .db_utils import insert_weather
 
 # Hard-coded Weatherstack API key
-WEATHERSTACK_API_KEY = "YOUR_WEATHERSTACK_KEY_HERE"
+WEATHERSTACK_API_KEY = "240695f1e2a6874957578b46f2c95ba3"
 
 WEATHERSTACK_URL = "http://api.weatherstack.com/historical"
 
@@ -27,12 +27,12 @@ def fetch_weather(lat, lon, date, api_key=WEATHERSTACK_API_KEY):
     
     # Weatherstack error field
     if "error" in data:
-        print("❌ Weatherstack error:", data["error"])
+        print("Weatherstack error:", data["error"])
         return None
 
     historical = data.get("historical", {})
     if date not in historical:
-        print(f"⚠️ No historical weather found for {date}")
+        print(f"No historical weather found for {date}")
         return None
 
     day = historical[date]
