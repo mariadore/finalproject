@@ -2,72 +2,84 @@ import requests
 import time
 from .db_utils import insert_weather
 
-# Hard-coded Weatherstack API key
-WEATHERSTACK_API_KEY = "240695f1e2a6874957578b46f2c95ba3"
-
-WEATHERSTACK_URL = "http://api.weatherstack.com/historical"
+OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 
 
-def fetch_weather(lat, lon, date, api_key=WEATHERSTACK_API_KEY):
+def fetch_weather(lat, lon, date):
     """
-    Fetch historical weather from Weatherstack API.
-    date format: 'YYYY-MM-DD'
+    Fetch historical weather from Open-Meteo.
+    date format: YYYY-MM-DD
     """
+
     params = {
-        "access_key": api_key,
-        "query": f"{lat},{lon}",
-        "historical_date": date,
-        "hourly": "1"
+        "latitude": lat,
+        "longitude": lon,
+        "start_date": date,
+        "end_date": date,
+        "hourly": "temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code",
+        "timezone": "UTC"
     }
 
-    resp = requests.get(WEATHERSTACK_URL, params=params, timeout=30)
+    resp = requests.get(OPEN_METEO_URL, params=params, timeout=30)
     resp.raise_for_status()
 
     data = resp.json()
-    
-    # Weatherstack error field
-    if "error" in data:
-        print("Weatherstack error:", data["error"])
+
+    # Hourly arrays
+    hourly = data.get("hourly", {})
+    temps = hourly.get("temperature_2m", [])
+    humidity = hourly.get("relative_humidity_2m", [])
+    precip = hourly.get("precipitation", [])
+    wind = hourly.get("wind_speed_10m", [])
+    weather_codes = hourly.get("weather_code", [])
+
+    if not temps:
+        print(f"⚠️ No hourly weather for {date}")
         return None
 
-    historical = data.get("historical", {})
-    if date not in historical:
-        print(f"No historical weather found for {date}")
-        return None
+    # Compute aggregations
+    temp_avg = sum(temps) / len(temps)
+    temp_min = min(temps)
+    temp_max = max(temps)
+    precip_mm = sum(precip)
+    humidity_avg = sum(humidity) / len(humidity)
+    wind_avg = sum(wind) / len(wind)
 
-    day = historical[date]
+    # Convert weather code → label
+    WEATHER_CODE_MAP = {
+        0: "Clear",
+        1: "Mainly Clear",
+        2: "Partly Cloudy",
+        3: "Overcast",
+        45: "Foggy",
+        48: "Rime Fog",
+        51: "Light Drizzle",
+        61: "Rain",
+        71: "Snow",
+        80: "Rain Showers",
+        95: "Thunderstorm"
+    }
 
-    # Extract useful values
-    temp_c = day.get("avgtemp")
-    temp_min = day.get("mintemp")
-    temp_max = day.get("maxtemp")
-    humidity = day.get("avghumidity")
-    precip_mm = day.get("precip")
-    
-    # Weather conditions from "hourly"
-    hourly = day.get("hourly", [])
-    if hourly:
-        weather_main = hourly[0].get("weather_descriptions", ["Unknown"])[0]
-        wind_speed = hourly[0].get("windspeed")
+    if weather_codes:
+        wc = weather_codes[0]
+        weather_main = WEATHER_CODE_MAP.get(wc, "Unknown")
     else:
         weather_main = "Unknown"
-        wind_speed = None
 
     return {
-        "temp_c": temp_c,
+        "temp_c": temp_avg,
         "temp_min_c": temp_min,
         "temp_max_c": temp_max,
-        "humidity": humidity,
         "precip_mm": precip_mm,
-        "wind_speed": wind_speed,
+        "wind_speed": wind_avg,
+        "humidity": humidity_avg,
         "weather_main": weather_main
     }
 
 
-def fetch_weather_for_all_locations(conn, dates, api_key=WEATHERSTACK_API_KEY, max_items=25):
+def fetch_weather_for_all_locations(conn, dates, max_items=25):
     """
-    Fetch historical weather for up to max_items rows in LocationData.
-    Inserts into WeatherData table.
+    Fetch historical Open-Meteo weather for all locations.
     """
 
     cur = conn.cursor()
@@ -76,7 +88,7 @@ def fetch_weather_for_all_locations(conn, dates, api_key=WEATHERSTACK_API_KEY, m
 
     for location_id, lat, lon in rows:
         for date in dates:
-            weather = fetch_weather(lat, lon, date, api_key)
+            weather = fetch_weather(lat, lon, date)
 
             if weather:
                 insert_weather(conn, {
@@ -91,4 +103,4 @@ def fetch_weather_for_all_locations(conn, dates, api_key=WEATHERSTACK_API_KEY, m
                     "weather_main": weather["weather_main"]
                 })
 
-            time.sleep(1)  # avoid rate limits
+            time.sleep(0.25)
