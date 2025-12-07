@@ -2,12 +2,12 @@ import requests
 import time
 from .db_utils import insert_weather
 
-OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
+OPEN_METEO_ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 
 
 def fetch_weather(lat, lon, date):
     """
-    Fetch historical weather from Open-Meteo.
+    Fetch historical weather from Open-Meteo Archive API.
     date format: YYYY-MM-DD
     """
 
@@ -20,12 +20,11 @@ def fetch_weather(lat, lon, date):
         "timezone": "UTC"
     }
 
-    resp = requests.get(OPEN_METEO_URL, params=params, timeout=30)
+    resp = requests.get(OPEN_METEO_ARCHIVE_URL, params=params, timeout=30)
     resp.raise_for_status()
 
     data = resp.json()
 
-    # Hourly arrays
     hourly = data.get("hourly", {})
     temps = hourly.get("temperature_2m", [])
     humidity = hourly.get("relative_humidity_2m", [])
@@ -34,10 +33,9 @@ def fetch_weather(lat, lon, date):
     weather_codes = hourly.get("weather_code", [])
 
     if not temps:
-        print(f"⚠️ No hourly weather for {date}")
+        print(f"⚠️ No hourly weather found for {date}")
         return None
 
-    # Compute aggregations
     temp_avg = sum(temps) / len(temps)
     temp_min = min(temps)
     temp_max = max(temps)
@@ -45,7 +43,6 @@ def fetch_weather(lat, lon, date):
     humidity_avg = sum(humidity) / len(humidity)
     wind_avg = sum(wind) / len(wind)
 
-    # Convert weather code → label
     WEATHER_CODE_MAP = {
         0: "Clear",
         1: "Mainly Clear",
@@ -79,7 +76,7 @@ def fetch_weather(lat, lon, date):
 
 def fetch_weather_for_all_locations(conn, dates, max_items=25):
     """
-    Fetch historical Open-Meteo weather for all locations.
+    Fetch historical weather for all locations using Open-Meteo Archive API.
     """
 
     cur = conn.cursor()
@@ -103,4 +100,4 @@ def fetch_weather_for_all_locations(conn, dates, max_items=25):
                     "weather_main": weather["weather_main"]
                 })
 
-            time.sleep(0.25)
+            time.sleep(0.25)  # prevent spamming the API
