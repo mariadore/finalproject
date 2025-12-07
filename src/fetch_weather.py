@@ -3,7 +3,9 @@ import time
 from datetime import datetime
 from .db_utils import insert_weather
 
+
 OWM_URL = "https://api.openweathermap.org/data/2.5/onecall/timemachine"
+OPENWEATHER_API_KEY = "240695f1e2a6874957578b46f2c95ba3"
 
 
 def fetch_weather(lat, lon, date, api_key):
@@ -50,7 +52,7 @@ def fetch_weather(lat, lon, date, api_key):
     }
 
 
-def fetch_weather_for_all_locations(conn, api_key, dates, max_items=25):
+def fetch_weather_for_all_locations(conn, api_key=OPENWEATHER_API_KEY, dates=None, max_items=25):
     """
     Fetch weather for up to max_items LocationData rows.
     """
