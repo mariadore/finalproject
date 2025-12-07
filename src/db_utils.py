@@ -10,7 +10,10 @@ def set_up_database(db_name: str= DB_NAME)-> Tuple[str, sqlite3.Connection]:
     os.makedirs(data_dir, exist_ok=True)
     db_path= os.path.join(data_dir, db_name)
     conn= sqlite3.connect(db_path)
+    conn.execute("PRAGMA foreign_keys = ON;")
     cur= conn.cursor()
+    
+    #create CrimeData table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS CrimeData (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,6 +31,7 @@ def set_up_database(db_name: str= DB_NAME)-> Tuple[str, sqlite3.Connection]:
         )
     """)
     
+    #create LocationData table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS LocationData (
         location_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,6 +43,25 @@ def set_up_database(db_name: str= DB_NAME)-> Tuple[str, sqlite3.Connection]:
         label TEXT UNIQUE
     );
     """)
+
+    #create WeatherData table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS WeatherData (
+        weather_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        location_id INTEGER,
+        date TEXT,
+        temp_c REAL,
+        temp_min_c REAL,
+        temp_max_c REAL,
+        precip_mm REAL,
+        wind_speed REAL,
+        humidity INTEGER,
+        weather_main TEXT,
+        UNIQUE(location_id, date),
+        FOREIGN KEY (location_id) REFERENCES LocationData(location_id)
+    );
+    """)
+
 
                 
                 
