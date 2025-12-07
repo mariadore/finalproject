@@ -62,6 +62,9 @@ def set_up_database(db_name: str= DB_NAME)-> Tuple[str, sqlite3.Connection]:
     );
     """)
 
+    conn.commit()   # make sure changes are saved
+    return db_path, conn
+
     # -------------------------
 # INSERT HELPERS (MATCH SCHEMA EXACTLY)
 # -------------------------
