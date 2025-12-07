@@ -1,7 +1,7 @@
 import requests
 import time
 from datetime import datetime
-from db_utils import insert_weather
+from .db_utils import insert_weather
 
 OWM_URL = "https://api.openweathermap.org/data/2.5/onecall/timemachine"
 

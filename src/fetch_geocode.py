@@ -1,6 +1,6 @@
 import requests
 import time
-from db_utils import insert_location, get_unlinked_crimes, link_crime_to_location
+from .db_utils import insert_location, get_unlinked_crimes, link_crime_to_location
 
 POSITIONSTACK_URL = "http://api.positionstack.com/v1/reverse"
 
