@@ -1,9 +1,9 @@
 import os
-from db_utils import set_up_database
-from fetch_crime import fetch_and_store_crimes
-from fetch_geocode import geocode_and_attach_locations
-from fetch_weather import fetch_weather_for_all_locations
-from process_and_visualize import run_visualizations
+from src.db_utils import set_up_database
+from src.fetch_crime import fetch_and_store_crimes
+from src.fetch_geocode import geocode_and_attach_locations
+from src.fetch_weather import fetch_weather_for_all_locations
+from src.process_and_visualize import run_visualizations
 
 LAT = 51.509865
 LON = -0.118092
