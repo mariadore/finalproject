@@ -1,60 +1,73 @@
 import requests
 import time
-from datetime import datetime
 from .db_utils import insert_weather
 
+# Hard-coded Weatherstack API key
+WEATHERSTACK_API_KEY = "YOUR_WEATHERSTACK_KEY_HERE"
 
-OWM_URL = "https://api.openweathermap.org/data/2.5/onecall/timemachine"
-OPENWEATHER_API_KEY = "240695f1e2a6874957578b46f2c95ba3"
+WEATHERSTACK_URL = "http://api.weatherstack.com/historical"
 
 
-def fetch_weather(lat, lon, date, api_key):
+def fetch_weather(lat, lon, date, api_key=WEATHERSTACK_API_KEY):
     """
-    Fetch daily historical weather.
-    date: YYYY-MM-DD
+    Fetch historical weather from Weatherstack API.
+    date format: 'YYYY-MM-DD'
     """
-    dt = int(datetime.strptime(date, "%Y-%m-%d").timestamp())
-
     params = {
-        "lat": lat,
-        "lon": lon,
-        "dt": dt,
-        "appid": api_key,
-        "units": "metric"
+        "access_key": api_key,
+        "query": f"{lat},{lon}",
+        "historical_date": date,
+        "hourly": "1"
     }
 
-    resp = requests.get(OWM_URL, params=params, timeout=30)
+    resp = requests.get(WEATHERSTACK_URL, params=params, timeout=30)
     resp.raise_for_status()
-    data = resp.json()
 
-    hourly = data.get("hourly", [])
-    if not hourly:
+    data = resp.json()
+    
+    # Weatherstack error field
+    if "error" in data:
+        print("❌ Weatherstack error:", data["error"])
         return None
 
-    temps = [h["temp"] for h in hourly]
-    hums = [h["humidity"] for h in hourly]
-    winds = [h["wind_speed"] for h in hourly]
+    historical = data.get("historical", {})
+    if date not in historical:
+        print(f"⚠️ No historical weather found for {date}")
+        return None
 
-    weather_main = hourly[0]["weather"][0]["main"]
+    day = historical[date]
 
-    precip = 0
-    for h in hourly:
-        precip += h.get("rain", {}).get("1h", 0) + h.get("snow", {}).get("1h", 0)
+    # Extract useful values
+    temp_c = day.get("avgtemp")
+    temp_min = day.get("mintemp")
+    temp_max = day.get("maxtemp")
+    humidity = day.get("avghumidity")
+    precip_mm = day.get("precip")
+    
+    # Weather conditions from "hourly"
+    hourly = day.get("hourly", [])
+    if hourly:
+        weather_main = hourly[0].get("weather_descriptions", ["Unknown"])[0]
+        wind_speed = hourly[0].get("windspeed")
+    else:
+        weather_main = "Unknown"
+        wind_speed = None
 
     return {
-        "temp_c": sum(temps)/len(temps),
-        "temp_min_c": min(temps),
-        "temp_max_c": max(temps),
-        "humidity": sum(hums)/len(hums),
-        "wind_speed": sum(winds)/len(winds),
-        "precip_mm": precip,
+        "temp_c": temp_c,
+        "temp_min_c": temp_min,
+        "temp_max_c": temp_max,
+        "humidity": humidity,
+        "precip_mm": precip_mm,
+        "wind_speed": wind_speed,
         "weather_main": weather_main
     }
 
 
-def fetch_weather_for_all_locations(conn, api_key=OPENWEATHER_API_KEY, dates=None, max_items=25):
+def fetch_weather_for_all_locations(conn, dates, api_key=WEATHERSTACK_API_KEY, max_items=25):
     """
-    Fetch weather for up to max_items LocationData rows.
+    Fetch historical weather for up to max_items rows in LocationData.
+    Inserts into WeatherData table.
     """
 
     cur = conn.cursor()
@@ -63,19 +76,19 @@ def fetch_weather_for_all_locations(conn, api_key=OPENWEATHER_API_KEY, dates=Non
 
     for location_id, lat, lon in rows:
         for date in dates:
-            w = fetch_weather(lat, lon, date, api_key)
-            if w:
-                weather_row = {
+            weather = fetch_weather(lat, lon, date, api_key)
+
+            if weather:
+                insert_weather(conn, {
                     "location_id": location_id,
                     "date": date,
-                    "temp_c": w["temp_c"],
-                    "temp_min_c": w["temp_min_c"],
-                    "temp_max_c": w["temp_max_c"],
-                    "precip_mm": w["precip_mm"],
-                    "wind_speed": w["wind_speed"],
-                    "humidity": w["humidity"],
-                    "weather_main": w["weather_main"]
-                }
-                insert_weather(conn, weather_row)
+                    "temp_c": weather["temp_c"],
+                    "temp_min_c": weather["temp_min_c"],
+                    "temp_max_c": weather["temp_max_c"],
+                    "precip_mm": weather["precip_mm"],
+                    "wind_speed": weather["wind_speed"],
+                    "humidity": weather["humidity"],
+                    "weather_main": weather["weather_main"]
+                })
 
-            time.sleep(1)
+            time.sleep(1)  # avoid rate limits
