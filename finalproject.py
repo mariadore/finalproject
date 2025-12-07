@@ -18,12 +18,13 @@ print(response.json())
 
 
 #weather
+
 API_KEY = "240695f1e2a6874957578b46f2c95ba3"
 
-url = "http://api.positionstack.com/v1/forward"
+url = "https://api.openweathermap.org/data/2.5/weather"
 params = {
-    "access_key": API_KEY,
-    "query": "England"
+    "q": "London,uk",
+    "appid": API_KEY
 }
 
 response = requests.get(url, params=params)
@@ -32,8 +33,8 @@ print(response.json())
 
 
 
+
 #crime
-import requests
 
 url = "https://data.police.uk/api/crimes-street/all-crime"
 params = {
