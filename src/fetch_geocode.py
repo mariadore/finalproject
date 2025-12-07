@@ -7,15 +7,25 @@ POSITIONSTACK_API_KEY = "e1534616c63441ebf4d00f2ed847b6d5"
 
 
 def reverse_geocode(lat, lon, api_key):
-    """Call Positionstack reverse geocoding."""
+    """Call Positionstack reverse geocoding with retry/backoff."""
     params = {
         "access_key": api_key,
         "query": f"{lat},{lon}",
         "limit": 1
     }
 
-    resp = requests.get(POSITIONSTACK_URL, params=params, timeout=30)
-    resp.raise_for_status()
+    # try up to 5 times
+    for attempt in range(5):
+        resp = requests.get(POSITIONSTACK_URL, params=params, timeout=30)
+
+        # if rate limited → wait and try again
+        if resp.status_code == 429:
+            print(f"⚠️  Positionstack rate limit hit. Waiting 3 seconds... (Attempt {attempt+1}/5)")
+            time.sleep(3)
+            continue
+
+        resp.raise_for_status()
+        break  # exit retry loop if successful
 
     data = resp.json().get("data") or []
     if not data:
