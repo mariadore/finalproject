@@ -3,6 +3,7 @@ import time
 from .db_utils import insert_location, get_unlinked_crimes, link_crime_to_location
 
 POSITIONSTACK_URL = "http://api.positionstack.com/v1/reverse"
+POSITIONSTACK_API_KEY = "e1534616c63441ebf4d00f2ed847b6d5"
 
 
 def reverse_geocode(lat, lon, api_key):
@@ -32,7 +33,7 @@ def reverse_geocode(lat, lon, api_key):
     }
 
 
-def geocode_and_attach_locations(conn, api_key, max_items=25):
+def geocode_and_attach_locations(conn, api_key=POSITIONSTACK_API_KEY, max_items=25):
     """
     Finds CrimeData rows with location_id=NULL,
     reverse geocodes them, inserts LocationData,
