@@ -61,10 +61,3 @@ def set_up_database(db_name: str= DB_NAME)-> Tuple[str, sqlite3.Connection]:
         FOREIGN KEY (location_id) REFERENCES LocationData(location_id)
     );
     """)
-
-
-                
-                
-    
-            
->>>>>>> d4156548d9fce57ff77fd604c29d680d39dfccd5
