@@ -61,6 +61,23 @@ def set_up_database(db_name: str= DB_NAME)-> Tuple[str, sqlite3.Connection]:
         FOREIGN KEY (location_id) REFERENCES LocationData(location_id)
     );
     """)
+    #table to keep track of cursors
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS api_cursors (
+        api_name TEXT PRIMARY KEY,
+        last_fetched TEXT
+    );
+    """)
+
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_crimedata_loc_date ON CrimeData(location_id, month);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_weatherdata_loc_date ON WeatherData(location_id, date);")
+    conn.commit()
+    print("Database and tables created successfully.")
+    return db_path, conn
+if __name__ == "__main__":
+    db_path, conn = set_up_database()
+    conn.close()
+
 
 
                 
