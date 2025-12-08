@@ -5,7 +5,7 @@ import pandas as pd
 
 def plot_crimes_by_weather(df):
     if df.empty:
-        print("⚠️ No weather data to plot.")
+        print("No weather data to plot.")
         return
 
     plt.figure(figsize=(8, 5))
@@ -23,7 +23,7 @@ def plot_crimes_by_weather(df):
 
 def plot_temp_vs_crime(df):
     if df.empty:
-        print("⚠️ No temperature data to plot.")
+        print("No temperature data to plot.")
         return
 
     plt.figure(figsize=(8, 5))

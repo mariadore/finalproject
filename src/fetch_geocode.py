@@ -18,9 +18,9 @@ def reverse_geocode(lat, lon, api_key):
     for attempt in range(5):
         resp = requests.get(POSITIONSTACK_URL, params=params, timeout=30)
 
-        # if rate limited → wait and try again
+        # if rate limited wait and try again
         if resp.status_code == 429:
-            print(f"⚠️  Positionstack rate limit hit. Waiting 3 seconds... (Attempt {attempt+1}/5)")
+            print(f"Positionstack rate limit hit. Waiting 3 seconds... (Attempt {attempt+1}/5)")
             time.sleep(3)
             continue
 

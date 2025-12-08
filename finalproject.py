@@ -41,7 +41,7 @@ def main():
 
     # Reverse Geocode Lat/Lon → City/Region
     print("Reverse geocoding crime locations...")
-    geocode_and_attach_locations(conn, max_items=50)
+    geocode_and_attach_locations(conn, max_items=5)
 
     # Expand crime months
     print("Preparing weather date list...")
@@ -49,13 +49,13 @@ def main():
 
     DATES = []
     for m in crime_months:
-        DATES.extend(expand_month_to_dates(m))
+        DATES.extend(expand_month_to_dates(m)[:5])  # first 5 days only
 
     print(f"Fetching weather for {len(DATES)} days...")
 
     # Fetch Weather for All Locations/Dates
     print("Fetching weather...")
-    fetch_weather_for_all_locations(conn, dates=DATES, max_items=50)
+    fetch_weather_for_all_locations(conn, dates=DATES, max_items=5)
 
     # Analysis
     print("Computing analysis...")
