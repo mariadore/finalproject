@@ -1,7 +1,7 @@
 from .fetch_crime import fetch_and_store_crimes
 from .fetch_weather import fetch_weather_for_all_locations
 from .fetch_geocode import geocode_and_attach_locations
-from .process_and_visualize import run_visualizations
+from .visualize import run_visualizations
 from .db_utils import set_up_database
 
 __all__ = [
