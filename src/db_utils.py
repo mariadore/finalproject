@@ -87,9 +87,8 @@ if __name__ == "__main__":
             
 =======
 
-    # -------------------------
-# INSERT HELPERS (MATCH SCHEMA EXACTLY)
-# -------------------------
+    conn.commit()   # make sure changes are saved
+    return db_path, conn
 
 def insert_location(conn, city, county, region, lat, lon, label):
     """

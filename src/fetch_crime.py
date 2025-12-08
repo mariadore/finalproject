@@ -1,6 +1,6 @@
 import requests
 import time
-from db_utils import insert_crime
+from .db_utils import insert_crime
 
 UK_POLICE_BASE = "https://data.police.uk/api"
 
