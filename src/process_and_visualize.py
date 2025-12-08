@@ -68,6 +68,18 @@ def plot_crime_type_stacked(df):
     plt.clf()
 
 
+def plot_crime_over_time(df):
+    df["date"]=pd.to_datetime(df["date"])
+    crimes_by_day=df.groupby("date").size()
+    crimes_by_day.plot(kind="line")
+    plt.title("Crimes Over Time")
+    plt.xlabel("Date")
+    plt.ylabel("Number of Crimes")
+    plt.tight_layout()
+    plt.savefig("crimes_over_time.png")
+    plt.clf()
+
+
 def run_visualizations(conn):
     df = load_joined_data(conn)
     if df.empty:
@@ -77,5 +89,7 @@ def run_visualizations(conn):
     plot_avg_crimes_by_weather(df)
     plot_temp_vs_crime(df)
     plot_crime_type_stacked(df)
+    plot_crime_over_time(df)
 
     print("Visualization PNGs saved.")
+
