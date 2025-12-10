@@ -31,12 +31,12 @@ def normalize_crime(raw):
         "crime_id": raw.get("id"),
         "persistent_id": raw.get("persistent_id"),
         "month": raw.get("month"),
-        "category": raw.get("category"),
+        "category": raw.get("category", ""),
         "latitude": float(loc.get("latitude")) if loc.get("latitude") else None,
         "longitude": float(loc.get("longitude")) if loc.get("longitude") else None,
         "street_id": street.get("id"),
-        "street_name": street.get("name"),
-        "outcome_category": outcome.get("category"),
+        "street_name": street.get("name", ""),
+        "outcome_category": outcome.get("category", ""),
         "outcome_date": outcome.get("date"),
         "location_id": None
     }
