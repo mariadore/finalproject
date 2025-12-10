@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 
 def detect_crime_column(df, preferred=None):
@@ -174,30 +175,29 @@ def plot_correlation_heatmap(df_weather):
         return
 
     numeric_df = df_weather.select_dtypes(include=[np.number])
-    if numeric_df.empty:
-        print("No numeric columns available for correlation heatmap.")
+    if numeric_df.empty or numeric_df.shape[1] < 2:
+        print("Not enough numeric columns for correlation heatmap.")
         return
 
     corr = numeric_df.corr()
 
-    plt.figure(figsize=(10, 8))
-    plt.imshow(corr, cmap="coolwarm", interpolation="nearest")
-    plt.colorbar()
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(
+        corr,
+        annot=True,
+        fmt=".2f",
+        cmap="coolwarm",
+        linewidths=0.5,
+        square=True,
+        cbar_kws={"shrink": 0.8}
+    )
 
-    plt.xticks(range(len(corr.columns)),
-               corr.columns,
-               rotation=45,
-               ha="right")
-    plt.yticks(range(len(corr.columns)), corr.columns)
-
-    plt.title("Correlation Heatmap: Crime vs Weather Variables",
-              fontsize=16)
+    plt.title("Correlation Heatmap: Crime vs Weather Variables", fontsize=16)
 
     plt.tight_layout()
     plt.savefig("correlation_heatmap.png")
     plt.close()
     print("Saved correlation_heatmap.png")
-
 
 # Main function to run all visualizations
 def visualize_results(df_weather, df_temp, df_types):
