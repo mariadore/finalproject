@@ -133,13 +133,19 @@ def plot_crime_type_distribution(df_types):
 
 # Crimes Over Time (line chart)
 def plot_crimes_over_time(df_weather):
-    if df_weather.empty or "date" not in df_weather.columns:
-        print("df_weather missing 'date' column, skipping plot.")
+    if df_weather.empty:
+        print("df_weather is empty, skipping plot.")
         return
 
     value_col = detect_crime_column(df_weather)
     if value_col is None:
         return
+
+    # If 'date' column is missing, create a synthetic one
+    if "date" not in df_weather.columns:
+        print("Warning: 'date' column missing, creating synthetic dates for plotting.")
+        df_weather = df_weather.copy()
+        df_weather["date"] = pd.date_range(start="2023-01-01", periods=len(df_weather))
 
     df = df_weather.sort_values("date")
 
