@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import sqlite3  # Needed to read from your crime_weather.db
 
 
 def detect_crime_column(df, preferred=None):
@@ -14,7 +13,7 @@ def detect_crime_column(df, preferred=None):
         "num_crimes"
     ]
     for col in candidates:
-        if col in df.columns and col is not None:
+        if col is not None and col in df.columns:
             return col
     print("ERROR: No usable crime column found in dataframe.")
     print("Available columns:", df.columns)
@@ -45,8 +44,11 @@ def plot_avg_crimes_per_weather(df_weather):
 
     for bar in bars:
         h = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2, h + 0.3,
-                 f"{h:.1f}", ha="center", fontsize=11)
+        plt.text(bar.get_x() + bar.get_width() / 2,
+                 h + 0.3,
+                 f"{h:.1f}",
+                 ha="center",
+                 fontsize=11)
 
     plt.tight_layout()
     plt.savefig("avg_crimes_weather.png")
@@ -116,17 +118,20 @@ def plot_crime_type_distribution(df_types):
     plt.title("Crime Type Distribution by Weather (Percent)", fontsize=16)
     plt.xlabel("Weather", fontsize=14)
     plt.ylabel("Percent of Crimes", fontsize=14)
-    plt.legend(title="Crime Category", bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.legend(title="Crime Category",
+               bbox_to_anchor=(1.05, 1),
+               loc="upper left")
 
     plt.tight_layout()
     plt.savefig("crime_type_stacked.png")
     plt.close()
     print("Saved crime_type_stacked.png")
 
+
 # Crimes Over Time (line chart)
 def plot_crimes_over_time(df_weather):
     if df_weather.empty or "date" not in df_weather.columns:
-        print("df_weather missing 'date' column, skipping crimes-over-time plot.")
+        print("df_weather missing 'date' column, skipping plot.")
         return
 
     value_col = detect_crime_column(df_weather)
@@ -166,10 +171,14 @@ def plot_correlation_heatmap(df_weather):
     plt.imshow(corr, cmap="coolwarm", interpolation="nearest")
     plt.colorbar()
 
-    plt.xticks(range(len(corr.columns)), corr.columns, rotation=45, ha="right")
+    plt.xticks(range(len(corr.columns)),
+               corr.columns,
+               rotation=45,
+               ha="right")
     plt.yticks(range(len(corr.columns)), corr.columns)
 
-    plt.title("Correlation Heatmap: Crime vs Weather Variables", fontsize=16)
+    plt.title("Correlation Heatmap: Crime vs Weather Variables",
+              fontsize=16)
 
     plt.tight_layout()
     plt.savefig("correlation_heatmap.png")
@@ -177,17 +186,17 @@ def plot_correlation_heatmap(df_weather):
     print("Saved correlation_heatmap.png")
 
 
-def visualize_results(df_weather, df_temp, df_types):
+# Main visualization runner
+def run_visualizations(df_weather, df_temp, df_types):
     print("Creating visualizations...")
 
-    # 3 required visualizations
+    # required
     plot_avg_crimes_per_weather(df_weather)
     plot_crimes_vs_temperature(df_temp)
     plot_crime_type_distribution(df_types)
 
-    # 2 extra credit visualizations
+    # extra credit
     plot_crimes_over_time(df_weather)
     plot_correlation_heatmap(df_weather)
 
     print("All visualizations saved!")
-
