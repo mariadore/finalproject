@@ -131,6 +131,8 @@ def plot_crime_type_distribution(df_types):
     plt.savefig("crime_type_stacked.png")
     plt.close()
     print("Saved crime_type_stacked.png")
+    print(df_types["category"].unique())
+
 
 
 # Crimes Over Time (line chart)
