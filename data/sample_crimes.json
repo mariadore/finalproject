@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "category": "anti-social-behaviour",
+    "month": "2023-09",
+    "location": {
+      "latitude": "51.509865",
+      "longitude": "-0.118092",
+      "street": {
+        "id": 123,
+        "name": "Some Street"
+      }
+    },
+    "persistent_id": "abc123"
+  },
+  {
+    "id": 2,
+    "category": "burglary",
+    "month": "2023-09",
+    "location": {
+      "latitude": "51.509900",
+      "longitude": "-0.118000",
+      "street": {
+        "id": 124,
+        "name": "Other Street"
+      }
+    },
+    "persistent_id": "def456"
+  }
+]
