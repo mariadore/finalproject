@@ -43,6 +43,7 @@ def plot_avg_crimes_per_weather(df_weather):
     plt.title("Average Crimes per Weather Type", fontsize=16)
     plt.xlabel("Weather", fontsize=14)
     plt.ylabel("Average Crimes per Day", fontsize=14)
+    plt.ylim(0,50)
     plt.xticks(rotation=25)
 
     for bar in bars:
@@ -121,6 +122,7 @@ def plot_crime_type_distribution(df_types):
     plt.title("Crime Type Distribution by Weather (Percent)", fontsize=16)
     plt.xlabel("Weather", fontsize=14)
     plt.ylabel("Percent of Crimes", fontsize=14)
+
     plt.legend(title="Crime Category",
                bbox_to_anchor=(1.05, 1),
                loc="upper left")
