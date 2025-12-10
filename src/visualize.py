@@ -4,6 +4,10 @@ import pandas as pd
 
 
 def detect_crime_column(df, preferred=None):
+    """
+    Detect a usable crime-related column in the DataFrame.
+    Tries preferred column first, then common alternatives.
+    """
     candidates = [
         preferred,
         "avg_crimes_per_day",
@@ -186,16 +190,16 @@ def plot_correlation_heatmap(df_weather):
     print("Saved correlation_heatmap.png")
 
 
-# Main visualization runner
-def run_visualizations(df_weather, df_temp, df_types):
+# Main visualization runner (used by main.py)
+def visualize_results(df_weather, df_temp, df_types):
     print("Creating visualizations...")
 
-    # required
+    # Required plots
     plot_avg_crimes_per_weather(df_weather)
     plot_crimes_vs_temperature(df_temp)
     plot_crime_type_distribution(df_types)
 
-    # extra credit
+    # Extra credit plots
     plot_crimes_over_time(df_weather)
     plot_correlation_heatmap(df_weather)
 
