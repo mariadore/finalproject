@@ -1,15 +1,17 @@
 import calendar
 import os
-from src.db_utils import set_up_database, release_default_location_links
+from src.db_utils import set_up_database, release_default_location_links, get_transit_stop_count
 from src.fetch_crime import fetch_and_store_crimes
 from src.fetch_geocode import geocode_and_attach_locations, assign_default_location
 from src.fetch_weather import fetch_weather_for_all_locations
+from src.fetch_transit import fetch_transit_stops
 from src.analysis import (
     calculate_crimes_by_weather,
     calculate_crimes_by_temperature_bins,
     calculate_crime_type_distribution,
     calculate_crimes_vs_wind,
-    calculate_precipitation_effect
+    calculate_precipitation_effect,
+    calculate_crimes_near_transit
 )
 from src.report import write_analysis_report
 from src.visualize import visualize_results
@@ -17,6 +19,7 @@ from src.visualize import visualize_results
 MIN_CRIME_ROWS = 100
 MIN_LOCATION_ROWS = 100
 MIN_WEATHER_ROWS = 100
+MIN_TRANSIT_ROWS = 100
 MAX_API_ITEMS_PER_RUN = 25
 REPORT_PATH = os.path.join(os.path.dirname(__file__), "analysis_summary.txt")
 
@@ -47,6 +50,8 @@ def main():
 
     cur.execute("SELECT COUNT(*) FROM WeatherData;")
     weather_count = cur.fetchone()[0]
+
+    transit_count = get_transit_stop_count(conn)
 
     # Fetch crime data only if needed
     LAT = 51.515
@@ -82,6 +87,30 @@ def main():
         print("LocationData already satisfies the minimum rows.")
         assign_default_location(conn)
 
+    # Transit stops (TfL)
+    if transit_count < MIN_TRANSIT_ROWS:
+        remaining_transit = MIN_TRANSIT_ROWS - transit_count
+        per_run_transit = min(MAX_API_ITEMS_PER_RUN, remaining_transit)
+        stop_type_cycle = [
+            ("NaptanMetroStation", (51.515, -0.13)),
+            ("NaptanRailStation", (51.503, -0.112)),
+            ("NaptanBusCoachStation", (51.510, -0.090)),
+        ]
+        cycle_index = transit_count // MAX_API_ITEMS_PER_RUN % len(stop_type_cycle)
+        stop_types, (t_lat, t_lon) = stop_type_cycle[cycle_index]
+        print(f"Fetching up to {per_run_transit} TfL stops (need {remaining_transit} more) "
+              f"using stop types [{stop_types}] near ({t_lat}, {t_lon}).")
+        fetch_transit_stops(
+            conn,
+            lat=t_lat,
+            lon=t_lon,
+            max_items=per_run_transit,
+            stop_types=stop_types
+        )
+        print("Re-run the script to accumulate at least 100 transit stops.")
+    else:
+        print("TransitStops already satisfies the minimum rows.")
+
     # Build weather date list
     print("Preparing weather date list...")
     crime_months = get_unique_crime_months(conn)
@@ -111,13 +140,14 @@ def main():
     df_types = calculate_crime_type_distribution(conn)
     df_wind = calculate_crimes_vs_wind(conn)
     df_rain = calculate_precipitation_effect(conn)
+    df_transit = calculate_crimes_near_transit(conn)
 
     # Visualizations
     print("Generating visualizations...")
-    visualize_results(df_weather, df_temp, df_types, df_wind, df_rain)
+    visualize_results(df_weather, df_temp, df_types, df_wind, df_rain, df_transit)
 
     print(f"Writing analysis summary to {REPORT_PATH} ...")
-    write_analysis_report(REPORT_PATH, df_weather, df_temp, df_types, df_wind, df_rain)
+    write_analysis_report(REPORT_PATH, df_weather, df_temp, df_types, df_wind, df_rain, df_transit)
 
     print("Done! Visualizations saved.")
 

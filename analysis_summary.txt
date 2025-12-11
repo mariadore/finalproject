@@ -1,6 +1,5 @@
 SI 201 Crime & Weather Analysis Summary
 By Lucia, Maria, and Brielle
-Generated: 2025-12-11 18:34 UTC
 
 Weather Impact (avg crimes/day):
   Top weather condition → Drizzle: 18.67
@@ -19,3 +18,7 @@ Wind Effects:
 
 Precipitation Effects:
   Highest crime rain level → Dry: 239
+
+Transit Proximity:
+  Modes represented → 1
+  Highest crime mode → tube: 2971

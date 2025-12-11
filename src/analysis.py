@@ -103,3 +103,34 @@ def calculate_precipitation_effect(conn):
     """
 
     return pd.read_sql_query(query, conn)
+
+
+def calculate_crimes_near_transit(conn):
+    """
+    Count crimes occurring near TfL transit stops (bounding-box proximity).
+    """
+    query = """
+        SELECT
+            T.stop_id,
+            T.common_name,
+            T.modes,
+            T.stop_type,
+            COUNT(C.id) AS crime_count
+        FROM TransitStops T
+        JOIN CrimeData C
+          ON C.latitude IS NOT NULL
+         AND C.longitude IS NOT NULL
+         AND ABS(C.latitude - T.lat) <= 0.01
+         AND ABS(C.longitude - T.lon) <= 0.01
+        GROUP BY T.stop_id
+        ORDER BY crime_count DESC;
+    """
+
+    df = pd.read_sql_query(query, conn)
+    if df.empty:
+        return df
+
+    df["primary_mode"] = df["modes"].fillna("unknown").apply(lambda m: m.split(",")[0] if m else "unknown")
+    grouped = df.groupby("primary_mode", as_index=False)["crime_count"].sum()
+    grouped = grouped.sort_values("crime_count", ascending=False).reset_index(drop=True)
+    return grouped

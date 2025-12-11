@@ -67,6 +67,19 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
         );
     """)
 
+    # Transit stops table (TfL)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS TransitStops (
+            stop_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            naptan_id TEXT UNIQUE,
+            common_name TEXT,
+            stop_type TEXT,
+            modes TEXT,
+            lat REAL,
+            lon REAL
+        );
+    """)
+
     # API cursor tracking table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS api_cursors (
@@ -81,6 +94,7 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
     cur.execute("CREATE INDEX IF NOT EXISTS idx_crimedata_loc_month ON CrimeData(location_id, month);")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_crimedata_loc_date ON CrimeData(location_id, crime_date);")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_weatherdata_loc_date ON WeatherData(location_id, date);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_transit_lat_lon ON TransitStops(lat, lon);")
 
     populate_missing_crime_dates(conn)
 
@@ -188,6 +202,27 @@ def insert_weather(conn, weather):
     conn.commit()
 
 
+def insert_transit_stop(conn, stop):
+    """
+    Insert TfL transit stop metadata.
+    """
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT OR IGNORE INTO TransitStops (
+            naptan_id, common_name, stop_type, modes, lat, lon
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        stop.get("naptan_id"),
+        stop.get("common_name"),
+        stop.get("stop_type"),
+        stop.get("modes"),
+        stop.get("lat"),
+        stop.get("lon")
+    ))
+    conn.commit()
+
+
 def get_unlinked_crimes(conn, limit=25):
     cur = conn.cursor()
     cur.execute("""
@@ -269,6 +304,13 @@ def get_all_locations(conn, limit=None):
 
     cur.execute(query, params)
     return cur.fetchall()
+
+
+def get_transit_stop_count(conn):
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM TransitStops;")
+    row = cur.fetchone()
+    return row[0] if row else 0
 
 
 def ensure_crime_date_column(conn):

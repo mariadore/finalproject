@@ -18,7 +18,7 @@ def _describe_top_value(df, label_col, value_col):
     return f"{label}: {value}"
 
 
-def write_analysis_report(path, df_weather, df_temp, df_types, df_wind=None, df_rain=None):
+def write_analysis_report(path, df_weather, df_temp, df_types, df_wind=None, df_rain=None, df_transit=None):
     """
     Persist a concise human-readable summary of the calculated data so it can be
     referenced in the written report.
@@ -35,6 +35,11 @@ def write_analysis_report(path, df_weather, df_temp, df_types, df_wind=None, df_
     rain_types = (
         df_types["weather_main"].nunique()
         if df_types is not None and "weather_main" in df_types.columns
+        else 0
+    )
+    transit_modes = (
+        df_transit["primary_mode"].nunique()
+        if df_transit is not None and "primary_mode" in df_transit.columns
         else 0
     )
 
@@ -59,6 +64,10 @@ def write_analysis_report(path, df_weather, df_temp, df_types, df_wind=None, df_
         "",
         "Precipitation Effects:",
         f"  Highest crime rain level → {_describe_top_value(df_rain, 'rain_level', 'crime_count')}",
+        "",
+        "Transit Proximity:",
+        f"  Modes represented → {transit_modes}",
+        f"  Highest crime mode → {_describe_top_value(df_transit, 'primary_mode', 'crime_count')}",
     ]
 
     output_path.write_text("\n".join(lines), encoding="utf-8")

@@ -317,11 +317,42 @@ def plot_precipitation_effect(df_rain):
 # ---------------------------
 # ALL VISUALIZATIONS WRAPPER
 # ---------------------------
-def visualize_results(df_weather, df_temp, df_types, df_wind=None, df_rain=None):
+def plot_crimes_vs_transit(df_transit):
+    if df_transit is None or df_transit.empty:
+        print("transit df empty → skipping")
+        return
+
+    plt.figure(figsize=(11, 6))
+    bars = plt.bar(df_transit["primary_mode"],
+                   df_transit["crime_count"],
+                   color=plt.cm.Purples(np.linspace(0.4, 0.9, len(df_transit))),
+                   edgecolor="black")
+
+    for bar in bars:
+        plt.text(bar.get_x() + bar.get_width()/2,
+                 bar.get_height() + max(bar.get_height() * 0.02, 0.5),
+                 f"{int(bar.get_height())}",
+                 ha="center",
+                 va="bottom")
+
+    plt.title("Crimes Near Transit Stops by Mode", fontsize=18, weight="bold")
+    plt.xlabel("Primary TfL Mode", fontsize=14)
+    plt.ylabel("Crimes within ~1km", fontsize=14)
+    plt.grid(axis="y", linestyle=":", alpha=0.4)
+    plt.tight_layout()
+    plt.savefig("transit_vs_crime.png", dpi=300)
+    plt.close()
+
+
+# ---------------------------
+# ALL VISUALIZATIONS WRAPPER
+# ---------------------------
+def visualize_results(df_weather, df_temp, df_types, df_wind=None, df_rain=None, df_transit=None):
     print("Creating visualizations…")
     plot_avg_crimes_per_weather(df_weather)
     plot_crimes_vs_temperature(df_temp)
     plot_crime_type_distribution(df_types)
     plot_crimes_vs_wind(df_wind)
     plot_precipitation_effect(df_rain)
+    plot_crimes_vs_transit(df_transit)
     print("Visualizations saved!")
