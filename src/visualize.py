@@ -28,25 +28,52 @@ def plot_avg_crimes_per_weather(df_weather):
         return
 
     col = detect_crime_column(df_weather, "avg_crimes_per_day")
-    df = df_weather.sort_values(col, ascending=False)
+    df = df_weather.sort_values(col, ascending=False).reset_index(drop=True)
 
-    plt.figure(figsize=(12, 6))
-    bars = plt.bar(df["weather_main"], df[col],
-                   color=plt.cm.Blues(np.linspace(0.4, 0.9, len(df))),
-                   edgecolor="black")
+    fig, ax1 = plt.subplots(figsize=(13, 6))
+    colors = plt.cm.Blues(np.linspace(0.4, 0.95, len(df)))
+    x = np.arange(len(df))
+    bars = ax1.bar(x, df[col],
+                   color=colors,
+                   edgecolor="black",
+                   linewidth=0.8)
 
-    plt.title("Average Crimes per Weather Type", fontsize=18, weight="bold")
-    plt.xlabel("Weather", fontsize=14)
-    plt.ylabel("Avg Crimes per Day", fontsize=14)
+    overall_mean = df[col].mean()
+    ax1.axhline(overall_mean, linestyle="--", color="gray", linewidth=1.3, label=f"Overall Avg ({overall_mean:.1f})")
 
-    for bar in bars:
-        plt.text(bar.get_x() + bar.get_width()/2,
-                 bar.get_height() + 0.3,
+    ax1.set_title("Average Crimes per Weather Type (bar) + Total Crimes (line)", fontsize=18, weight="bold")
+    ax1.set_xlabel("Weather", fontsize=14)
+    ax1.set_ylabel("Avg Crimes per Day", fontsize=14, color="midnightblue")
+    ax1.tick_params(axis="y", colors="midnightblue")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(df["weather_main"], rotation=20)
+    ax1.grid(axis="y", linestyle=":", alpha=0.4)
+
+    if "total_crimes" in df.columns:
+        ax2 = ax1.twinx()
+        ax2.plot(x, df["total_crimes"],
+                 color="crimson", marker="o", linewidth=2.2,
+                 label="Total Crimes")
+        ax2.set_ylabel("Total Crimes", fontsize=14, color="crimson")
+        ax2.tick_params(axis="y", colors="crimson")
+    else:
+        ax2 = None
+
+    for idx, bar in enumerate(bars):
+        ax1.text(bar.get_x() + bar.get_width()/2,
+                 bar.get_height() + 0.2,
                  f"{bar.get_height():.1f}",
                  ha="center",
-                 fontsize=12)
+                 fontsize=11,
+                 color="black")
 
-    plt.xticks(rotation=20)
+    handles, labels = ax1.get_legend_handles_labels()
+    if ax2:
+        h2, l2 = ax2.get_legend_handles_labels()
+        handles += h2
+        labels += l2
+    ax1.legend(handles, labels, loc="upper right", frameon=True)
+
     plt.tight_layout()
     plt.savefig("avg_crimes_weather.png", dpi=300)
     plt.close()
@@ -62,24 +89,40 @@ def plot_crimes_vs_temperature(df_temp):
 
     col = detect_crime_column(df_temp, "total_crimes")
 
-    plt.figure(figsize=(12, 6))
-
     if "temp_c" in df_temp.columns:
-        x = df_temp["temp_c"]
-        y = df_temp[col]
-        plt.scatter(x, y, s=60, c=y, cmap="coolwarm", edgecolors="black", alpha=0.8)
+        df = df_temp.dropna(subset=["temp_c"]).sort_values("temp_c")
+        if df.empty:
+            print("temperature df missing temp_c → skipping")
+            return
 
-        if len(df_temp) > 1:
-            try:
-                z = np.polyfit(x, y, 1)
-                plt.plot(x, np.poly1d(z)(x), linestyle="--", color="gray")
-            except np.linalg.LinAlgError:
-                pass
+        x = df["temp_c"].values
+        y = df[col].values
+
+        sizes = np.interp(y, (y.min(), y.max()), (60, 400)) if y.max() != y.min() else np.full_like(y, 120)
+        plt.figure(figsize=(13, 6))
+        scatter = plt.scatter(x, y, s=sizes, c=y, cmap="coolwarm",
+                              edgecolors="black", linewidth=0.4, alpha=0.75,
+                              label="Location-Day Observations")
+        cbar = plt.colorbar(scatter)
+        cbar.set_label("Crime Count", rotation=270, labelpad=15)
+
+        if len(df) > 2:
+            xs = np.linspace(x.min(), x.max(), 200)
+            coeffs = np.polyfit(x, y, 2)
+            trend = np.poly1d(coeffs)(xs)
+            plt.plot(xs, trend, linestyle="--", color="dimgray", linewidth=2,
+                     label="Quadratic Trend")
+
+            window = max(5, len(df)//8)
+            rolling = pd.Series(y).rolling(window=window, min_periods=1).mean()
+            plt.plot(x, rolling, color="black", linewidth=2,
+                     label=f"{window}-pt Rolling Avg")
 
         plt.xlabel("Average Temperature (°C)", fontsize=14)
         plt.title("Crimes vs Temperature (per location/day)", fontsize=18, weight="bold")
     else:
         # Fallback to bin-based display
+        plt.figure(figsize=(12, 6))
         x = np.arange(len(df_temp))
         y = df_temp[col]
 
@@ -96,6 +139,8 @@ def plot_crimes_vs_temperature(df_temp):
 
     plt.ylabel("Total Crimes", fontsize=14)
 
+    plt.legend(loc="best")
+    plt.grid(axis="both", linestyle=":", alpha=0.4)
     plt.tight_layout()
     plt.savefig("temp_vs_crime.png", dpi=300)
     plt.close()
@@ -131,30 +176,152 @@ def plot_crime_type_distribution(df_types):
         plt.close()
         return
 
-    pivot_pct = pivot.div(pivot.sum(axis=1), axis=0)
+    totals = pivot.sum(axis=1)
+    pivot_pct = pivot.div(totals, axis=0)
 
-    plt.figure(figsize=(14, 7))
-    pivot_pct.plot(kind="bar",
-                   stacked=True,
-                   colormap="tab20",
-                   ax=plt.gca())
+    fig, ax1 = plt.subplots(figsize=(14, 8))
+    x = np.arange(len(pivot_pct))
+    bottom = np.zeros(len(pivot_pct))
+    colors = plt.cm.tab20(np.linspace(0, 1, len(pivot_pct.columns)))
 
-    plt.title("Crime Type Distribution by Weather (%)", fontsize=18, weight="bold")
-    plt.xlabel("Weather", fontsize=14)
-    plt.ylabel("Percentage of Crimes", fontsize=14)
+    for idx, category in enumerate(pivot_pct.columns):
+        vals = pivot_pct[category].values
+        ax1.bar(x,
+                vals * 100,
+                bottom=bottom * 100,
+                label=category,
+                color=colors[idx],
+                edgecolor="white")
+        bottom += vals
 
-    plt.legend(title="Crime Category", bbox_to_anchor=(1.05, 1))
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(pivot_pct.index, rotation=20)
+    ax1.set_ylabel("Percentage of Crimes (%)", fontsize=14)
+    ax1.set_xlabel("Weather", fontsize=14)
+    ax1.set_title("Crime Type Distribution by Weather (stacked %) + Totals (line)", fontsize=18, weight="bold")
+    ax1.set_ylim(0, 105)
+
+    ax2 = ax1.twinx()
+    ax2.plot(x, totals.values, color="black", linewidth=2.2, marker="o", label="Total Crimes")
+    ax2.set_ylabel("Total Crimes", fontsize=14)
+
+    for idx, total in enumerate(totals.values):
+        ax2.text(x[idx], total + max(total * 0.02, 1),
+                 f"{int(total)}",
+                 ha="center",
+                 va="bottom",
+                 fontsize=11,
+                 color="black")
+
+    handles1, labels1 = ax1.get_legend_handles_labels()
+    handles2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(handles1 + handles2, labels1 + labels2,
+               title="Crime Categories",
+               bbox_to_anchor=(1.02, 1),
+               loc="upper left",
+               frameon=True)
+
     plt.tight_layout()
     plt.savefig("crime_type_stacked.png", dpi=300)
+    plt.close()
+
+
+def plot_crimes_vs_wind(df_wind):
+    if df_wind is None or df_wind.empty:
+        print("wind df empty → skipping")
+        return
+
+    col = detect_crime_column(df_wind, "crime_count")
+    df = df_wind.copy()
+
+    if "wind_bin" in df.columns:
+        df["wind_bin"] = pd.to_numeric(df["wind_bin"], errors="coerce")
+        df = df.dropna(subset=["wind_bin"]).sort_values("wind_bin")
+
+    df["cumulative_pct"] = df[col].cumsum() / max(df[col].sum(), 1)
+
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+    bars = ax1.bar(df["wind_bin"], df[col],
+                   width=0.4,
+                   color="#0f8a8a",
+                   edgecolor="black",
+                   alpha=0.8,
+                   label="Crime Count")
+    ax1.set_xlabel("Wind Speed (m/s)", fontsize=14)
+    ax1.set_ylabel("Total Crimes", fontsize=14, color="#0f8a8a")
+    ax1.tick_params(axis="y", colors="#0f8a8a")
+    ax1.grid(axis="y", linestyle=":", alpha=0.4)
+
+    ax2 = ax1.twinx()
+    ax2.plot(df["wind_bin"], df["cumulative_pct"] * 100,
+             color="darkred", marker="o", linewidth=2,
+             label="Cumulative % of Crimes")
+    ax2.set_ylabel("Cumulative %", fontsize=14, color="darkred")
+    ax2.tick_params(axis="y", colors="darkred")
+    ax2.set_ylim(0, 105)
+
+    for bar in bars:
+        ax1.text(bar.get_x() + bar.get_width()/2,
+                 bar.get_height() + max(bar.get_height() * 0.02, 0.5),
+                 f"{int(bar.get_height())}",
+                 ha="center",
+                 fontsize=10)
+
+    handles1, labels1 = ax1.get_legend_handles_labels()
+    handles2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(handles1 + handles2, labels1 + labels2, loc="upper left")
+
+    plt.title("Crime Counts vs Wind Speed (+ cumulative share)", fontsize=18, weight="bold")
+    plt.tight_layout()
+    plt.savefig("wind_vs_crime.png", dpi=300)
+    plt.close()
+
+
+def plot_precipitation_effect(df_rain):
+    if df_rain is None or df_rain.empty:
+        print("precip df empty → skipping")
+        return
+
+    col = detect_crime_column(df_rain, "crime_count")
+    order = ["Dry", "Light Rain", "Heavy Rain"]
+    df = df_rain.set_index("rain_level").reindex(order).fillna(0).reset_index()
+    total = df[col].sum() or 1
+    df["pct"] = (df[col] / total) * 100
+
+    plt.figure(figsize=(11, 5))
+    bars = plt.barh(df["rain_level"],
+                    df[col],
+                    color=["#f0c419", "#4aa3df", "#1f4e79"],
+                    edgecolor="black",
+                    alpha=0.9)
+
+    for idx, bar in enumerate(bars):
+        width = bar.get_width()
+        pct = df.iloc[idx]["pct"]
+        plt.text(width + max(total * 0.01, 1),
+                 bar.get_y() + bar.get_height()/2,
+                 f"{int(width)} ({pct:.1f}%)",
+                 va="center",
+                 fontsize=12)
+
+    plt.title("Crime Counts by Rain Level", fontsize=18, weight="bold")
+    plt.xlabel("Total Crimes", fontsize=14)
+    plt.ylabel("Rain Level", fontsize=14)
+    plt.grid(axis="x", linestyle=":", alpha=0.4)
+
+    plt.tight_layout()
+    plt.savefig("precip_vs_crime.png", dpi=300)
     plt.close()
 
 
 # ---------------------------
 # ALL VISUALIZATIONS WRAPPER
 # ---------------------------
-def visualize_results(df_weather, df_temp, df_types):
+def visualize_results(df_weather, df_temp, df_types, df_wind=None, df_rain=None):
     print("Creating visualizations…")
     plot_avg_crimes_per_weather(df_weather)
     plot_crimes_vs_temperature(df_temp)
     plot_crime_type_distribution(df_types)
+    plot_crimes_vs_wind(df_wind)
+    plot_precipitation_effect(df_rain)
     print("Visualizations saved!")
