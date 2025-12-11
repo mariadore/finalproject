@@ -1,9 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 
 def detect_crime_column(df, preferred=None):
+    """
+    Detects the appropriate crime-related column in a dataframe.
+    Returns the first matching column from a list of candidates.
+    """
     candidates = [
         preferred,
         "avg_crimes_per_day",
@@ -13,7 +18,7 @@ def detect_crime_column(df, preferred=None):
         "num_crimes"
     ]
     for col in candidates:
-        if col in df.columns and col is not None:
+        if col is not None and col in df.columns:
             return col
     print("ERROR: No usable crime column found in dataframe.")
     print("Available columns:", df.columns)
@@ -34,18 +39,21 @@ def plot_avg_crimes_per_weather(df_weather):
 
     plt.figure(figsize=(10, 6))
     colors = plt.cm.Blues(np.linspace(0.4, 0.9, len(df)))
-
     bars = plt.bar(df["weather_main"], df[value_col], color=colors)
 
     plt.title("Average Crimes per Weather Type", fontsize=16)
     plt.xlabel("Weather", fontsize=14)
     plt.ylabel("Average Crimes per Day", fontsize=14)
+    plt.ylim(0,50)
     plt.xticks(rotation=25)
 
     for bar in bars:
         h = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2, h + 0.3,
-                 f"{h:.1f}", ha="center", fontsize=11)
+        plt.text(bar.get_x() + bar.get_width() / 2,
+                 h + 0.3,
+                 f"{h:.1f}",
+                 ha="center",
+                 fontsize=11)
 
     plt.tight_layout()
     plt.savefig("avg_crimes_weather.png")
@@ -115,19 +123,93 @@ def plot_crime_type_distribution(df_types):
     plt.title("Crime Type Distribution by Weather (Percent)", fontsize=16)
     plt.xlabel("Weather", fontsize=14)
     plt.ylabel("Percent of Crimes", fontsize=14)
-    plt.legend(title="Crime Category", bbox_to_anchor=(1.05, 1), loc="upper left")
+
+    plt.legend(title="Crime Category",
+               bbox_to_anchor=(1.05, 1),
+               loc="upper left")
 
     plt.tight_layout()
     plt.savefig("crime_type_stacked.png")
     plt.close()
     print("Saved crime_type_stacked.png")
+    print(df_types["category"].unique())
 
 
+
+# Crimes Over Time (line chart)
+def plot_crimes_over_time(df_weather):
+    if df_weather.empty:
+        print("df_weather is empty, skipping plot.")
+        return
+
+    value_col = detect_crime_column(df_weather)
+    if value_col is None:
+        return
+
+    # If 'date' column is missing, create a synthetic one
+    if "date" not in df_weather.columns:
+        print("Warning: 'date' column missing, creating synthetic dates for plotting.")
+        df_weather = df_weather.copy()
+        df_weather["date"] = pd.date_range(start="2023-01-01", periods=len(df_weather))
+
+    df = df_weather.sort_values("date")
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(df["date"], df[value_col], marker="o")
+
+    plt.title("Crimes Over Time", fontsize=16)
+    plt.xlabel("Date", fontsize=14)
+    plt.ylabel("Crime Count", fontsize=14)
+    plt.xticks(rotation=25)
+
+    plt.tight_layout()
+    plt.savefig("crimes_over_time.png")
+    plt.close()
+    print("Saved crimes_over_time.png")
+
+
+# Correlation Heatmap (crime + weather numerical variables)
+def plot_correlation_heatmap(df_weather):
+    if df_weather.empty:
+        print("df_weather is empty, skipping heatmap.")
+        return
+
+    numeric_df = df_weather.select_dtypes(include=[np.number])
+    if numeric_df.empty or numeric_df.shape[1] < 2:
+        print("Not enough numeric columns for correlation heatmap.")
+        return
+
+    corr = numeric_df.corr()
+
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(
+        corr,
+        annot=True,
+        fmt=".2f",
+        cmap="coolwarm",
+        linewidths=0.5,
+        square=True,
+        cbar_kws={"shrink": 0.8}
+    )
+
+    plt.title("Correlation Heatmap: Crime vs Weather Variables", fontsize=16)
+
+    plt.tight_layout()
+    plt.savefig("correlation_heatmap.png")
+    plt.close()
+    print("Saved correlation_heatmap.png")
+
+# Main function to run all visualizations
 def visualize_results(df_weather, df_temp, df_types):
     print("Creating visualizations...")
 
+    # Required visualizations
     plot_avg_crimes_per_weather(df_weather)
     plot_crimes_vs_temperature(df_temp)
     plot_crime_type_distribution(df_types)
+
+    # Extra visualizations (optional/bonus)
+    plot_crimes_over_time(df_weather)
+    plot_correlation_heatmap(df_weather)
 
     print("All visualizations saved!")
