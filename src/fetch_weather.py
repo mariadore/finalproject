@@ -1,5 +1,5 @@
 import requests
-from .db_utils import insert_weather, get_locations_missing_weather
+from .db_utils import insert_weather, get_all_locations
 
 
 OPEN_METEO_URL = "https://archive-api.open-meteo.com/v1/archive"
@@ -104,7 +104,7 @@ def fetch_weather(lat, lon, date):
     }
 
 
-def fetch_weather_for_all_locations(conn, dates, max_items=5):
+def fetch_weather_for_all_locations(conn, dates, max_items=None):
     """
     Fetch weather for each unique location in DB.
     """
@@ -112,12 +112,17 @@ def fetch_weather_for_all_locations(conn, dates, max_items=5):
         print("No dates supplied → skipping weather fetch.")
         return
 
-    locations = get_locations_missing_weather(conn, limit=max_items)
+    unique_dates = sorted(set(dates))
+    locations = get_all_locations(conn, limit=max_items)
 
-    print(f"Fetching weather for {len(locations)} locations...")
+    if not locations:
+        print("No locations available for weather fetch.")
+        return
+
+    print(f"Fetching weather for {len(locations)} locations × {len(unique_dates)} days...")
 
     for location_id, lat, lon in locations:
-        for date in dates:
+        for date in unique_dates:
             weather = fetch_weather(lat, lon, date)
             if weather:
                 weather["location_id"] = location_id

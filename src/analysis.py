@@ -4,19 +4,22 @@ import pandas as pd
 
 def calculate_crimes_by_weather(conn):
     """
-    JOIN CrimeData → LocationData → WeatherData
-    Group by weather_main
+    Join WeatherData → CrimeData to ensure every weather type
+    appears even if it has zero linked crimes.
     """
     query = """
         SELECT 
             W.weather_main,
             COUNT(C.id) AS total_crimes,
-            COUNT(C.id) * 1.0 / COUNT(DISTINCT W.date) AS avg_crimes_per_day
-        FROM CrimeData C
-        JOIN WeatherData W ON C.location_id = W.location_id 
-                           AND C.month = SUBSTR(W.date, 1, 7)
+            CASE
+                WHEN COUNT(DISTINCT W.date) = 0 THEN 0
+                ELSE COUNT(C.id) * 1.0 / COUNT(DISTINCT W.date)
+            END AS avg_crimes_per_day
+        FROM WeatherData W
+        LEFT JOIN CrimeData C ON C.location_id = W.location_id 
+                             AND C.crime_date = W.date
         GROUP BY W.weather_main
-        ORDER BY total_crimes DESC;
+        ORDER BY avg_crimes_per_day DESC;
     """
 
     df = pd.read_sql_query(query, conn)
@@ -41,7 +44,7 @@ def calculate_crimes_by_temperature_bins(conn):
             COUNT(C.id) AS total_crimes
         FROM CrimeData C
         JOIN WeatherData W ON C.location_id = W.location_id
-                           AND C.month = SUBSTR(W.date, 1, 7)
+                           AND C.crime_date = W.date
         GROUP BY temp_bin
         ORDER BY total_crimes DESC;
     """
@@ -62,7 +65,7 @@ def calculate_crime_type_distribution(conn):
             COUNT(C.id) AS crime_count
         FROM CrimeData C
         JOIN WeatherData W ON C.location_id = W.location_id
-                           AND C.month = SUBSTR(W.date, 1, 7)
+                           AND C.crime_date = W.date
         GROUP BY W.weather_main, C.category
         ORDER BY W.weather_main, crime_count DESC;
     """
@@ -78,7 +81,7 @@ def calculate_crimes_vs_wind(conn):
             COUNT(C.id) AS crime_count
         FROM CrimeData C
         JOIN WeatherData W ON C.location_id = W.location_id
-                           AND C.month = SUBSTR(W.date, 1, 7)
+                           AND C.crime_date = W.date
         GROUP BY wind_bin
         ORDER BY wind_bin;
     """
@@ -97,11 +100,9 @@ def calculate_precipitation_effect(conn):
             COUNT(C.id) AS crime_count
         FROM CrimeData C
         JOIN WeatherData W ON C.location_id = W.location_id
-                           AND C.month = SUBSTR(W.date, 1, 7)
+                           AND C.crime_date = W.date
         GROUP BY rain_level
         ORDER BY crime_count DESC;
     """
 
     return pd.read_sql_query(query, conn)
-
-

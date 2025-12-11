@@ -1,5 +1,4 @@
 import calendar
-import random
 from src.db_utils import set_up_database
 from src.fetch_crime import fetch_and_store_crimes
 from src.fetch_geocode import geocode_and_attach_locations
@@ -64,15 +63,16 @@ def main():
     DATES = []
 
     for m in crime_months:
-        all_days = expand_month_to_dates(m)
-        DATES.extend(random.sample(all_days, 5))  # random 5 days per month
+        DATES.extend(expand_month_to_dates(m))
+
+    DATES = sorted(set(DATES))
 
     # Fetch weather only if needed
     if weather_count == 0:
-        print(f"Fetching weather for {len(DATES)} days...")
-        fetch_weather_for_all_locations(conn, dates=DATES, max_items=5)
+        print(f"Fetching weather for {len(DATES)} days across {len(crime_months)} months...")
     else:
-        print("WeatherData already populated → skipping weather fetch.")
+        print("Refreshing weather data to ensure all dates/locations covered...")
+    fetch_weather_for_all_locations(conn, dates=DATES)
 
     # Analysis
     print("Computing analysis...")
