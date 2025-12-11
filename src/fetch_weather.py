@@ -1,6 +1,6 @@
 import requests
 import time
-from db_utils import insert_weather
+from .db_utils import insert_weather
 
 OPEN_METEO_ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 
@@ -33,7 +33,7 @@ def fetch_weather(lat, lon, date):
     weather_codes = hourly.get("weather_code", [])
 
     if not temps:
-        print(f"⚠️ No hourly weather found for {date}")
+        print(f" No hourly weather found for {date}")
         return None
 
     temp_avg = sum(temps) / len(temps)
