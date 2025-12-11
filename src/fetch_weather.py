@@ -33,7 +33,7 @@ def fetch_weather(lat, lon, date):
     weather_codes = hourly.get("weather_code", [])
 
     if not temps:
-        print(f"⚠️ No hourly weather found for {date}")
+        print(f" No hourly weather found for {date}")
         return None
 
     temp_avg = sum(temps) / len(temps)

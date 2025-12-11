@@ -43,16 +43,14 @@ def reverse_geocode(lat, lon, api_key):
     }
 
 
-def geocode_and_attach_locations(conn, api_key=POSITIONSTACK_API_KEY, max_items=25):
-    """
-    Finds CrimeData rows with location_id=NULL,
-    reverse geocodes them, inserts LocationData,
-    and updates CrimeData.location_id.
-    """
-    crimes = get_unlinked_crimes(conn, max_items)
+def geocode_and_attach_locations(conn, api_key=POSITIONSTACK_API_KEY, max_items=5):
+    crimes = get_unlinked_crimes(conn, limit=max_items)  # hard limit
+
+    print(f"Geocoding only {len(crimes)} crimes…")
 
     for crime_id, crime_uid, lat, lon in crimes:
         geo = reverse_geocode(lat, lon, api_key)
+
         if geo:
             location_id = insert_location(
                 conn,
@@ -65,4 +63,5 @@ def geocode_and_attach_locations(conn, api_key=POSITIONSTACK_API_KEY, max_items=
             )
             link_crime_to_location(conn, crime_id, location_id)
 
-        time.sleep(0.5)  # API-friendly
+        time.sleep(1)   # keep this slow to avoid rate limit
+

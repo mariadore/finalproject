@@ -47,7 +47,7 @@ def main():
 
     if crime_count == 0:
         print("Fetching UK crimes...")
-        fetch_and_store_crimes(conn, LAT, LON, MONTH, max_items=50)
+        fetch_and_store_crimes(conn, MONTH, max_items=500)
     else:
         print(f"CrimeData already populated ({crime_count} rows) → skipping fetch.")
 
