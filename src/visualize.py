@@ -70,6 +70,17 @@ def plot_crimes_vs_temperature(df_temp):
     value_col = detect_crime_column(df_temp, preferred="total_crimes")
     if value_col is None:
         return
+    
+    numeric_x=[]
+    for b in df_temp["temp_bin"]:
+        if "-" in b:
+            low, high = b.reaplce("°C","").split("-")
+            numeric_x.append((float(low)+float(high))/2)
+        elif ">" in b:
+            numeric_x.append(float(b.replace(">","").replace("°C","")) + 2)
+        else:
+            numeric_x.append(np.nan)
+    df_temp["temp_numeric"] = numeric_x
 
     x = np.arange(len(df_temp))
     y = df_temp[value_col]
@@ -85,6 +96,7 @@ def plot_crimes_vs_temperature(df_temp):
     plt.title("Crimes vs Temperature Range", fontsize=16)
     plt.xlabel("Temperature Bin", fontsize=14)
     plt.ylabel("Total Crimes", fontsize=14)
+    plt.xlin(0, max(x) +3)
     plt.xticks(x, df_temp["temp_bin"], rotation=15)
     plt.grid(alpha=0.3)
 
@@ -132,7 +144,6 @@ def plot_crime_type_distribution(df_types):
     plt.savefig("crime_type_stacked.png")
     plt.close()
     print("Saved crime_type_stacked.png")
-    print(df_types["category"].unique())
 
 
 
