@@ -96,7 +96,10 @@ def main():
             ("NaptanRailStation", (51.503, -0.112)),
             ("NaptanBusCoachStation", (51.510, -0.090)),
         ]
-        cycle_index = transit_count // MAX_API_ITEMS_PER_RUN % len(stop_type_cycle)
+        cycle_index = min(
+            transit_count // MAX_API_ITEMS_PER_RUN,
+            len(stop_type_cycle) - 1
+        )
         stop_types, (t_lat, t_lon) = stop_type_cycle[cycle_index]
         print(f"Fetching up to {per_run_transit} TfL stops (need {remaining_transit} more) "
               f"using stop types [{stop_types}] near ({t_lat}, {t_lon}).")
