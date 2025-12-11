@@ -29,7 +29,7 @@ def main():
     print("Fetching UK crime data...")
     fetch_and_store_crimes(conn, MONTH)
 
-    # 3. GEOCODE LOCATIONS
+    # 3. Geocode locations
 
     print("Skipping geocoding (disabled for reliability).")
     # geocode_and_attach_locations(conn, pos_key)
