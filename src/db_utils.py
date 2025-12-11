@@ -251,22 +251,6 @@ if __name__ == "__main__":
     conn.close()
 
 
-def get_locations_missing_weather(conn, limit=10):
-    """
-    Return location_id + lat/lon for locations that have NO weather records yet.
-    """
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT l.location_id, l.lat, l.lon
-        FROM LocationData l
-        LEFT JOIN WeatherData w ON l.location_id = w.location_id
-        WHERE w.location_id IS NULL
-        LIMIT ?;
-    """, (limit,))
-    
-    return cur.fetchall()
-
-
 def get_all_locations(conn, limit=None):
     """
     Return all locations with coordinates, optionally limited.

@@ -6,9 +6,7 @@ from .db_utils import insert_crime
 UK_POLICE_BASE = "https://data.police.uk/api"
 
 
-# ------------------------------------------------------------
 # POLYGON FOR CENTRAL LONDON (Westminster / Waterloo / Soho)
-# ------------------------------------------------------------
 DEFAULT_LONDON_POLY = (
     "51.520,-0.155:"
     "51.510,-0.155:"

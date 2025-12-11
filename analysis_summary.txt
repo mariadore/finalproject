@@ -1,0 +1,20 @@
+SI 201 Crime & Weather Analysis Summary
+Generated: 2025-12-11 18:23 UTC
+
+Weather Impact (avg crimes/day):
+  Top weather condition → Drizzle: 18.67
+  Total weather types analyzed → 7
+
+Temperature Relationship:
+  Observations analyzed → 300
+  Max crimes on a single day → 2023-09-17: 24
+
+Crime Type Distribution:
+  Weather types represented → 7
+  Dominant crime category → anti-social-behaviour: 187
+
+Wind Effects:
+  Highest crime wind bin → 45.6: 25.00
+
+Precipitation Effects:
+  Highest crime rain level → Dry: 239
