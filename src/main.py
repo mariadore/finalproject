@@ -31,7 +31,7 @@ def main():
     # 2. FETCH CRIME DATA
    
     print("Fetching UK crime data...")
-    fetch_and_store_crimes(conn, LAT, LON, MONTH)
+    fetch_and_store_crimes(conn, MONTH)
 
     # 3. GEOCODE LOCATIONS
 
