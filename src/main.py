@@ -46,8 +46,8 @@ def main():
     else:
         print("No locations available — skipping weather.")
 
-    # 6. Run analysis
-    
+    # 5. Run analysis
+
     print("Running analysis queries...")
 
     df_weather_types = calculate_crimes_by_weather(conn)
@@ -58,9 +58,8 @@ def main():
 
     print("Analysis DataFrames created successfully.")
 
-    # -------------------------------
-    # 6. VISUALIZE
-    # -------------------------------
+    # 6. Visualize
+    
     print("Generating visualizations...")
 
     visualize_results(
