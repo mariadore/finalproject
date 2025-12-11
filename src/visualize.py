@@ -20,6 +20,7 @@ def detect_crime_column(df, preferred=None):
     for col in candidates:
         if col is not None and col in df.columns:
             return col
+
     print("ERROR: No usable crime column found in dataframe.")
     print("Available columns:", df.columns)
     return None
@@ -44,16 +45,19 @@ def plot_avg_crimes_per_weather(df_weather):
     plt.title("Average Crimes per Weather Type", fontsize=16)
     plt.xlabel("Weather", fontsize=14)
     plt.ylabel("Average Crimes per Day", fontsize=14)
-    plt.ylim(0,50)
+    plt.ylim(0, 50)
     plt.xticks(rotation=25)
 
+    # Value labels
     for bar in bars:
         h = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2,
-                 h + 0.3,
-                 f"{h:.1f}",
-                 ha="center",
-                 fontsize=11)
+        plt.text(
+            bar.get_x() + bar.get_width() / 2,
+            h + 0.3,
+            f"{h:.1f}",
+            ha="center",
+            fontsize=11
+        )
 
     plt.tight_layout()
     plt.savefig("avg_crimes_weather.png")
@@ -70,16 +74,22 @@ def plot_crimes_vs_temperature(df_temp):
     value_col = detect_crime_column(df_temp, preferred="total_crimes")
     if value_col is None:
         return
-    
-    numeric_x=[]
+
+    # Convert temperature bins into numeric midpoints
+    numeric_x = []
     for b in df_temp["temp_bin"]:
+        b = b.replace("°C", "").strip()
+
         if "-" in b:
-            low, high = b.reaplce("°C","").split("-")
-            numeric_x.append((float(low)+float(high))/2)
+            low, high = b.split("-")
+            numeric_x.append((float(low) + float(high)) / 2)
+
         elif ">" in b:
-            numeric_x.append(float(b.replace(">","").replace("°C","")) + 2)
+            numeric_x.append(float(b.replace(">", "")) + 2)
+
         else:
             numeric_x.append(np.nan)
+
     df_temp["temp_numeric"] = numeric_x
 
     x = np.arange(len(df_temp))
@@ -88,6 +98,7 @@ def plot_crimes_vs_temperature(df_temp):
     plt.figure(figsize=(10, 6))
     plt.scatter(x, y, s=200, c=y, cmap="coolwarm", edgecolors="black")
 
+    # Trendline
     if len(df_temp) >= 2:
         z = np.polyfit(x, y, 1)
         p = np.poly1d(z)
@@ -96,7 +107,7 @@ def plot_crimes_vs_temperature(df_temp):
     plt.title("Crimes vs Temperature Range", fontsize=16)
     plt.xlabel("Temperature Bin", fontsize=14)
     plt.ylabel("Total Crimes", fontsize=14)
-    plt.xlim(0, max(x) +3)
+    plt.xlim(0, max(x) + 3)
     plt.xticks(x, df_temp["temp_bin"], rotation=15)
     plt.grid(alpha=0.3)
 
@@ -127,24 +138,27 @@ def plot_crime_type_distribution(df_types):
     pivot_pct = pivot.div(pivot.sum(axis=1), axis=0)
 
     plt.figure(figsize=(12, 7))
-    pivot_pct.plot(kind="bar",
-                   stacked=True,
-                   colormap="tab20",
-                   figsize=(12, 7))
+    pivot_pct.plot(
+        kind="bar",
+        stacked=True,
+        colormap="tab20",
+        figsize=(12, 7)
+    )
 
     plt.title("Crime Type Distribution by Weather (Percent)", fontsize=16)
     plt.xlabel("Weather", fontsize=14)
     plt.ylabel("Percent of Crimes", fontsize=14)
 
-    plt.legend(title="Crime Category",
-               bbox_to_anchor=(1.05, 1),
-               loc="upper left")
+    plt.legend(
+        title="Crime Category",
+        bbox_to_anchor=(1.05, 1),
+        loc="upper left"
+    )
 
     plt.tight_layout()
     plt.savefig("crime_type_stacked.png")
     plt.close()
     print("Saved crime_type_stacked.png")
-
 
 
 # Crimes Over Time (line chart)
@@ -157,11 +171,14 @@ def plot_crimes_over_time(df_weather):
     if value_col is None:
         return
 
-    # If 'date' column is missing, create a synthetic one
+    # If 'date' column missing → create synthetic timeline
     if "date" not in df_weather.columns:
         print("Warning: 'date' column missing, creating synthetic dates for plotting.")
         df_weather = df_weather.copy()
-        df_weather["date"] = pd.date_range(start="2023-01-01", periods=len(df_weather))
+        df_weather["date"] = pd.date_range(
+            start="2023-01-01",
+            periods=len(df_weather)
+        )
 
     df = df_weather.sort_values("date")
 
@@ -186,6 +203,7 @@ def plot_correlation_heatmap(df_weather):
         return
 
     numeric_df = df_weather.select_dtypes(include=[np.number])
+
     if numeric_df.shape[1] < 2:
         print("Not enough numeric columns for heatmap.")
         return
@@ -210,7 +228,8 @@ def plot_correlation_heatmap(df_weather):
     plt.close()
     print("Saved correlation_heatmap.png")
 
-# Main function to run all visualizations
+
+# Main visualization controller
 def visualize_results(df_weather, df_temp, df_types):
     print("Creating visualizations...")
 
@@ -219,7 +238,7 @@ def visualize_results(df_weather, df_temp, df_types):
     plot_crimes_vs_temperature(df_temp)
     plot_crime_type_distribution(df_types)
 
-    # Extra visualizations (optional/bonus)
+    # Optional extras
     plot_crimes_over_time(df_weather)
     plot_correlation_heatmap(df_weather)
 
