@@ -35,7 +35,7 @@ def main():
     # geocode_and_attach_locations(conn, pos_key)
 
 
-    # 4. FETCH WEATHER DATA
+    # 4. Fetch weather data
  
     # Only run if we have locations (avoids errors)
     has_locations = pd.read_sql_query("SELECT COUNT(*) AS n FROM LocationData;", conn).iloc[0]["n"]
