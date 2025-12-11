@@ -313,10 +313,6 @@ def plot_precipitation_effect(df_rain):
     plt.savefig("precip_vs_crime.png", dpi=300)
     plt.close()
 
-
-# ---------------------------
-# ALL VISUALIZATIONS WRAPPER
-# ---------------------------
 def plot_crimes_vs_transit(df_transit):
     if df_transit is None or df_transit.empty:
         print("transit df empty → skipping")
@@ -377,7 +373,7 @@ def plot_crimes_vs_transit(df_transit):
     plt.close()
 
 
-# All visualizations wrapper
+# All visualizations 
 
 def visualize_results(df_weather, df_temp, df_types, df_wind=None, df_rain=None, df_transit=None):
     print("Creating visualizations…")
