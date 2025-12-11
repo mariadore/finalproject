@@ -20,5 +20,5 @@ Precipitation Effects:
   Highest crime rain level → Dry: 239
 
 Transit Proximity:
-  Modes represented → 1
+  Modes represented → 13
   Highest crime mode → tube: 2971.00

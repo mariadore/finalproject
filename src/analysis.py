@@ -110,9 +110,15 @@ STOP_TYPE_MODE_MAP = {
     "NaptanRailStation": "rail",
     "NaptanBusCoachStation": "bus",
     "NaptanPublicBusCoachTram": "bus",
+    "NaptanTramStation": "tram",
     "NaptanFerryPort": "river",
     "NaptanAirAccessArea": "air"
 }
+EXPECTED_TRANSIT_MODES = sorted({
+    "tube", "rail", "bus", "tram", "river", "air",
+    "overground", "dlr", "coach", "river-bus", "river-tour",
+    "cable-car", "national-rail"
+} | set(STOP_TYPE_MODE_MAP.values()))
 
 
 def _split_modes(modes_str, stop_type):
@@ -171,4 +177,17 @@ def calculate_crimes_near_transit(conn):
     )
     grouped["crime_count"] = grouped["crime_count"].round(2)
     grouped["avg_crimes_per_stop"] = grouped["crime_count"] / grouped["stop_count"].clip(lower=1)
+
+    # Ensure every expected mode appears in visualization even if zero stops/crimes yet.
+    missing_modes = [m for m in EXPECTED_TRANSIT_MODES if m not in grouped["mode"].values]
+    if missing_modes:
+        filler = pd.DataFrame({
+            "mode": missing_modes,
+            "crime_count": [0.0] * len(missing_modes),
+            "stop_count": [0] * len(missing_modes),
+            "avg_crimes_per_stop": [0.0] * len(missing_modes)
+        })
+        grouped = pd.concat([grouped, filler], ignore_index=True)
+        grouped = grouped.sort_values("crime_count", ascending=False).reset_index(drop=True)
+
     return grouped

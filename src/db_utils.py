@@ -2,7 +2,7 @@ import sqlite3
 import os
 import calendar
 import hashlib
-from typing import Tuple
+from typing import Tuple, Optional
 
 DB_NAME = 'crime_weather.db'
 
@@ -363,6 +363,30 @@ def populate_missing_crime_dates(conn):
             (crime_date, pk)
         )
 
+    conn.commit()
+
+
+def get_api_cursor(conn, api_name: str, default: Optional[str] = None) -> Optional[str]:
+    """
+    Fetch the last cursor/token stored for an API. Returns default if missing.
+    """
+    cur = conn.cursor()
+    cur.execute("SELECT last_fetched FROM api_cursors WHERE api_name = ?", (api_name,))
+    row = cur.fetchone()
+    return row[0] if row else default
+
+
+def set_api_cursor(conn, api_name: str, value: str):
+    """
+    Upsert the cursor/token for an API into api_cursors.
+    """
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO api_cursors (api_name, last_fetched)
+        VALUES (?, ?)
+        ON CONFLICT(api_name) DO UPDATE
+        SET last_fetched = excluded.last_fetched
+    """, (api_name, value))
     conn.commit()
 
 
