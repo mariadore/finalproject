@@ -31,18 +31,16 @@ def main():
     print("Fetching UK crime data...")
     fetch_and_store_crimes(conn, MONTH)
 
-    # -------------------------------
-    # 3. GEOCODE LOCATIONS (TomTom)
-    # -------------------------------
-    print("Reverse geocoding crime coordinates...")
-    geocode_and_attach_locations(conn)
+    # 3. GEOCODE LOCATIONS
 
-    # -------------------------------
-    # 4. FETCH WEATHER
-    # -------------------------------
-    has_locations = pd.read_sql_query(
-        "SELECT COUNT(*) AS n FROM LocationData;", conn
-    ).iloc[0]["n"]
+    print("Skipping geocoding (disabled for reliability).")
+    # geocode_and_attach_locations(conn, pos_key)
+
+
+    # 4. FETCH WEATHER DATA
+ 
+    # Only run if we have locations (avoids errors)
+    has_locations = pd.read_sql_query("SELECT COUNT(*) AS n FROM LocationData;", conn).iloc[0]["n"]
 
     if has_locations > 0:
         print("Fetching historical weather (TomTom)...")
