@@ -2,54 +2,58 @@ import requests
 import time
 from .db_utils import insert_location, get_unlinked_crimes, link_crime_to_location
 
-POSITIONSTACK_URL = "http://api.positionstack.com/v1/reverse"
-POSITIONSTACK_API_KEY = "e1534616c63441ebf4d00f2ed847b6d5"
+# TomTom Reverse Geocoding endpoint
+TOMTOM_API_KEY = "tfFYIYGPk25q0LqtkS2chNGRsdPWLA2y"
+TOMTOM_URL = "https://api.tomtom.com/search/2/reverseGeocode/{},{}.json"
 
 
-def reverse_geocode(lat, lon, api_key):
-    """Call Positionstack reverse geocoding with retry/backoff."""
-    params = {
-        "access_key": api_key,
-        "query": f"{lat},{lon}",
-        "limit": 1
-    }
+def reverse_geocode(lat, lon, api_key=TOMTOM_API_KEY):
+    """
+    Reverse geocode using TomTom API.
+    Returns city, county, region, lat, lon, label.
+    """
 
-    # try up to 5 times
-    for attempt in range(5):
-        resp = requests.get(POSITIONSTACK_URL, params=params, timeout=30)
+    url = TOMTOM_URL.format(lat, lon)
+    params = {"key": api_key}
 
-        # if rate limited wait and try again
-        if resp.status_code == 429:
-            print(f"Positionstack rate limit hit. Waiting 3 seconds... (Attempt {attempt+1}/5)")
-            time.sleep(3)
-            continue
+    resp = requests.get(url, params=params, timeout=30)
+    resp.raise_for_status()
+    data = resp.json()
 
-        resp.raise_for_status()
-        break  # exit retry loop if successful
-
-    data = resp.json().get("data") or []
-    if not data:
+    # TomTom JSON structure
+    if not data.get("addresses"):
         return None
 
-    d = data[0]
+    addr = data["addresses"][0]["address"]
+
+    city = addr.get("municipality") or addr.get("localName")
+    county = addr.get("countrySecondarySubdivision")
+    region = addr.get("countrySubdivision")
+    label = addr.get("freeformAddress")
 
     return {
-        "city": d.get("locality") or d.get("county"),
-        "county": d.get("county"),
-        "region": d.get("region"),
+        "city": city,
+        "county": county,
+        "region": region,
         "lat": lat,
         "lon": lon,
-        "label": d.get("label")
+        "label": label
     }
 
 
-def geocode_and_attach_locations(conn, api_key=POSITIONSTACK_API_KEY, max_items=5):
-    crimes = get_unlinked_crimes(conn, limit=max_items)  # hard limit
+def geocode_and_attach_locations(conn, max_items=25):
+    """
+    Gets crimes with no location_id,
+    reverse geocodes them using TomTom,
+    inserts into LocationData,
+    updates CrimeData.
+    """
+    crimes = get_unlinked_crimes(conn, limit=max_items)
 
-    print(f"Geocoding only {len(crimes)} crimes…")
+    print(f"Geocoding {len(crimes)} crimes using TomTom API...")
 
-    for crime_id, crime_uid, lat, lon in crimes:
-        geo = reverse_geocode(lat, lon, api_key)
+    for crime_pk, crime_uid, lat, lon in crimes:
+        geo = reverse_geocode(lat, lon)
 
         if geo:
             location_id = insert_location(
@@ -61,7 +65,8 @@ def geocode_and_attach_locations(conn, api_key=POSITIONSTACK_API_KEY, max_items=
                 geo["lon"],
                 geo["label"]
             )
-            link_crime_to_location(conn, crime_id, location_id)
+            link_crime_to_location(conn, crime_pk, location_id)
 
-        time.sleep(1)   # keep this slow to avoid rate limit
+        time.sleep(0.3)  # respectful delay
 
+    print("TomTom geocoding complete.")

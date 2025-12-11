@@ -54,7 +54,7 @@ def main():
     # Reverse geocode only if needed
     if loc_count == 0:
         print("Reverse geocoding crime locations...")
-        geocode_and_attach_locations(conn, max_items=5)
+        geocode_and_attach_locations(conn, max_items=10)
     else:
         print("LocationData already populated → skipping geocoding.")
 
