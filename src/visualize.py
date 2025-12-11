@@ -143,9 +143,8 @@ def plot_crimes_vs_temperature(df_temp):
     plt.close()
 
 
-# ---------------------------
-# CRIME TYPE DISTRIBUTION
-# ---------------------------
+# Crime type distribution
+
 def plot_crime_type_distribution(df_types):
     if df_types.empty:
         print("type df empty → skipping")
