@@ -108,6 +108,8 @@ def calculate_precipitation_effect(conn):
 def calculate_crimes_near_transit(conn):
     """
     Count crimes occurring near TfL transit stops (bounding-box proximity).
+    Always include transit modes even if zero crimes were observed so the
+    visualization has data to show.
     """
     query = """
         SELECT
@@ -115,9 +117,9 @@ def calculate_crimes_near_transit(conn):
             T.common_name,
             T.modes,
             T.stop_type,
-            COUNT(C.id) AS crime_count
+            COALESCE(COUNT(C.id), 0) AS crime_count
         FROM TransitStops T
-        JOIN CrimeData C
+        LEFT JOIN CrimeData C
           ON C.latitude IS NOT NULL
          AND C.longitude IS NOT NULL
          AND ABS(C.latitude - T.lat) <= 0.01
@@ -131,6 +133,14 @@ def calculate_crimes_near_transit(conn):
         return df
 
     df["primary_mode"] = df["modes"].fillna("unknown").apply(lambda m: m.split(",")[0] if m else "unknown")
-    grouped = df.groupby("primary_mode", as_index=False)["crime_count"].sum()
-    grouped = grouped.sort_values("crime_count", ascending=False).reset_index(drop=True)
+    grouped = (
+        df.groupby("primary_mode", as_index=False)
+          .agg(
+              crime_count=("crime_count", "sum"),
+              stop_count=("stop_id", "count")
+          )
+          .sort_values("crime_count", ascending=False)
+          .reset_index(drop=True)
+    )
+    grouped["avg_crimes_per_stop"] = grouped["crime_count"] / grouped["stop_count"].clip(lower=1)
     return grouped
