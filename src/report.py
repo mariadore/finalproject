@@ -40,7 +40,7 @@ def write_analysis_report(path, df_weather, df_temp, df_types, df_wind=None, df_
 
     lines = [
         "SI 201 Crime & Weather Analysis Summary",
-        f"Generated: {datetime.utcnow():%Y-%m-%d %H:%M UTC}",
+        "By Lucia, Maria, and Brielle",
         "",
         "Weather Impact (avg crimes/day):",
         f"  Top weather condition → {_describe_top_value(df_weather, 'weather_main', 'avg_crimes_per_day')}",
