@@ -46,9 +46,8 @@ def main():
     else:
         print("No locations available — skipping weather.")
 
-    # -------------------------------
-    # 5. RUN CALCULATIONS
-    # -------------------------------
+    # 6. Run analysis
+    
     print("Running analysis queries...")
 
     df_weather_types = calculate_crimes_by_weather(conn)
