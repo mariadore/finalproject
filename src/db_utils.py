@@ -184,3 +184,21 @@ def link_crime_to_location(conn, crime_pk, location_id):
 if __name__ == "__main__":
     db_path, conn = set_up_database()
     conn.close()
+
+
+def get_locations_missing_weather(conn, limit=10):
+    """
+    Return location_id + lat/lon for locations that have NO weather records yet.
+    """
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT l.location_id, l.lat, l.lon
+        FROM LocationData l
+        LEFT JOIN WeatherData w ON l.location_id = w.location_id
+        WHERE w.location_id IS NULL
+        LIMIT ?;
+    """, (limit,))
+    
+    return cur.fetchall()
+
+
