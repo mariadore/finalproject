@@ -1,6 +1,6 @@
 import requests
 import time
-from db_utils import insert_weather
+from .db_utils import insert_weather
 
 OPEN_METEO_ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 
