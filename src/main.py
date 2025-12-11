@@ -35,11 +35,9 @@ def main():
 
     # 3. GEOCODE LOCATIONS
 
-    if pos_key:
-        print("Reverse geocoding crime coordinates...")
-        geocode_and_attach_locations(conn, pos_key)
-    else:
-        print("No POSITIONSTACK_API_KEY found. Skipping geocoding.")
+    print("Skipping geocoding (disabled for reliability).")
+    # geocode_and_attach_locations(conn, pos_key)
+
 
     # 4. FETCH WEATHER DATA
  
