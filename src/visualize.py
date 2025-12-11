@@ -96,7 +96,7 @@ def plot_crimes_vs_temperature(df_temp):
     plt.title("Crimes vs Temperature Range", fontsize=16)
     plt.xlabel("Temperature Bin", fontsize=14)
     plt.ylabel("Total Crimes", fontsize=14)
-    plt.xlin(0, max(x) +3)
+    plt.xlim(0, max(x) +3)
     plt.xticks(x, df_temp["temp_bin"], rotation=15)
     plt.grid(alpha=0.3)
 
