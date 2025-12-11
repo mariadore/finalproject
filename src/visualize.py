@@ -74,7 +74,7 @@ def plot_crimes_vs_temperature(df_temp):
     numeric_x=[]
     for b in df_temp["temp_bin"]:
         if "-" in b:
-            low, high = b.reaplce("°C","").split("-")
+            low, high = b.replce("°C","").split("-")
             numeric_x.append((float(low)+float(high))/2)
         elif ">" in b:
             numeric_x.append(float(b.replace(">","").replace("°C","")) + 2)
