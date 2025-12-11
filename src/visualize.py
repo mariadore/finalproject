@@ -171,12 +171,12 @@ def plot_crimes_over_time(df_weather):
 # Correlation Heatmap (crime + weather numerical variables)
 def plot_correlation_heatmap(df_weather):
     if df_weather.empty:
-        print("df_weather is empty, skipping heatmap.")
+        print("df_weather empty, skipping heatmap.")
         return
 
     numeric_df = df_weather.select_dtypes(include=[np.number])
-    if numeric_df.empty or numeric_df.shape[1] < 2:
-        print("Not enough numeric columns for correlation heatmap.")
+    if numeric_df.shape[1] < 2:
+        print("Not enough numeric columns for heatmap.")
         return
 
     corr = numeric_df.corr()
