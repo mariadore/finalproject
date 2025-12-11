@@ -69,3 +69,39 @@ def calculate_crime_type_distribution(conn):
 
     df = pd.read_sql_query(query, conn)
     return df
+
+
+def calculate_crimes_vs_wind(conn):
+    query = """
+        SELECT 
+            ROUND(W.wind_speed, 1) AS wind_bin,
+            COUNT(C.id) AS crime_count
+        FROM CrimeData C
+        JOIN WeatherData W ON C.location_id = W.location_id
+                           AND C.month = SUBSTR(W.date, 1, 7)
+        GROUP BY wind_bin
+        ORDER BY wind_bin;
+    """
+
+    return pd.read_sql_query(query, conn)
+
+
+def calculate_precipitation_effect(conn):
+    query = """
+        SELECT
+            CASE
+                WHEN W.precip_mm = 0 THEN 'Dry'
+                WHEN W.precip_mm BETWEEN 0.1 AND 2 THEN 'Light Rain'
+                ELSE 'Heavy Rain'
+            END AS rain_level,
+            COUNT(C.id) AS crime_count
+        FROM CrimeData C
+        JOIN WeatherData W ON C.location_id = W.location_id
+                           AND C.month = SUBSTR(W.date, 1, 7)
+        GROUP BY rain_level
+        ORDER BY crime_count DESC;
+    """
+
+    return pd.read_sql_query(query, conn)
+
+
