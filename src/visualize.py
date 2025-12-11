@@ -377,9 +377,8 @@ def plot_crimes_vs_transit(df_transit):
     plt.close()
 
 
-# ---------------------------
-# ALL VISUALIZATIONS WRAPPER
-# ---------------------------
+# All visualizations wrapper
+
 def visualize_results(df_weather, df_temp, df_types, df_wind=None, df_rain=None, df_transit=None):
     print("Creating visualizations…")
     plot_avg_crimes_per_weather(df_weather)
