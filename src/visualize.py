@@ -334,8 +334,8 @@ def plot_crimes_vs_transit(df_transit):
                    width=0.6,
                    label="Total Crimes")
     ax1.set_xticks(x)
-    ax1.set_xticklabels(df["primary_mode"])
-    ax1.set_xlabel("Primary TfL Mode", fontsize=14)
+    ax1.set_xticklabels(df["mode"])
+    ax1.set_xlabel("TfL Mode", fontsize=14)
     ax1.set_ylabel("Total Crimes (within ~1 km)", fontsize=14, color="#4b2c7f")
     ax1.tick_params(axis="y", colors="#4b2c7f")
     ax1.grid(axis="y", linestyle=":", alpha=0.4)

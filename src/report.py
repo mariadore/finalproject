@@ -38,8 +38,8 @@ def write_analysis_report(path, df_weather, df_temp, df_types, df_wind=None, df_
         else 0
     )
     transit_modes = (
-        df_transit["primary_mode"].nunique()
-        if df_transit is not None and "primary_mode" in df_transit.columns
+        df_transit["mode"].nunique()
+        if df_transit is not None and "mode" in df_transit.columns
         else 0
     )
 
@@ -67,7 +67,7 @@ def write_analysis_report(path, df_weather, df_temp, df_types, df_wind=None, df_
         "",
         "Transit Proximity:",
         f"  Modes represented → {transit_modes}",
-        f"  Highest crime mode → {_describe_top_value(df_transit, 'primary_mode', 'crime_count')}",
+        f"  Highest crime mode → {_describe_top_value(df_transit, 'mode', 'crime_count')}",
     ]
 
     output_path.write_text("\n".join(lines), encoding="utf-8")
