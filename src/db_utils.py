@@ -214,6 +214,38 @@ def link_crime_to_location(conn, crime_pk, location_id):
     conn.commit()
 
 
+def release_default_location_links(conn, limit=25):
+    """
+    Reset a limited number of crimes that were tied to the DEFAULT_LONDON location
+    back to NULL so fresh geocode attempts can run in future executions.
+    """
+    cur = conn.cursor()
+    cur.execute("SELECT location_id FROM LocationData WHERE label = 'DEFAULT_LONDON'")
+    row = cur.fetchone()
+    if not row:
+        return 0
+
+    default_id = row[0]
+    cur.execute("""
+        SELECT id FROM CrimeData
+        WHERE location_id = ?
+        LIMIT ?
+    """, (default_id, limit))
+    ids = [r[0] for r in cur.fetchall()]
+    if not ids:
+        return 0
+
+    for crime_pk in ids:
+        cur.execute("""
+            UPDATE CrimeData
+            SET location_id = NULL
+            WHERE id = ?
+        """, (crime_pk,))
+
+    conn.commit()
+    return len(ids)
+
+
 if __name__ == "__main__":
     db_path, conn = set_up_database()
     conn.close()

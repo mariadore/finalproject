@@ -46,7 +46,7 @@ def main():
 
     if has_locations > 0:
         print("Fetching historical weather (TomTom)...")
-        fetch_weather_for_all_locations(conn, DATES)
+        fetch_weather_for_all_locations(conn, DATES, max_new_records=25)
     else:
         print("No locations available — skipping weather.")
 

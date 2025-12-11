@@ -65,7 +65,7 @@ def normalize_crime(raw):
     }
 
 
-def fetch_and_store_crimes(conn, month, poly=DEFAULT_LONDON_POLY, max_items=500):
+def fetch_and_store_crimes(conn, month, poly=DEFAULT_LONDON_POLY, max_items=25):
     """
     Fetch crime data from API (polygon) and store in database.
     - Uses polygon to fetch crimes covering a larger London area

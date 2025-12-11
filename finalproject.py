@@ -1,7 +1,8 @@
 import calendar
-from src.db_utils import set_up_database
+import os
+from src.db_utils import set_up_database, release_default_location_links
 from src.fetch_crime import fetch_and_store_crimes
-from src.fetch_geocode import geocode_and_attach_locations
+from src.fetch_geocode import geocode_and_attach_locations, assign_default_location
 from src.fetch_weather import fetch_weather_for_all_locations
 from src.analysis import (
     calculate_crimes_by_weather,
@@ -10,8 +11,14 @@ from src.analysis import (
     calculate_crimes_vs_wind,
     calculate_precipitation_effect
 )
+from src.report import write_analysis_report
 from src.visualize import visualize_results
 
+MIN_CRIME_ROWS = 100
+MIN_LOCATION_ROWS = 100
+MIN_WEATHER_ROWS = 100
+MAX_API_ITEMS_PER_RUN = 25
+REPORT_PATH = os.path.join(os.path.dirname(__file__), "analysis_summary.txt")
 
 def expand_month_to_dates(month_str):
     """Convert a crime month (YYYY-MM) → list of YYYY-MM-DD dates."""
@@ -35,7 +42,7 @@ def main():
     cur.execute("SELECT COUNT(*) FROM CrimeData;")
     crime_count = cur.fetchone()[0]
 
-    cur.execute("SELECT COUNT(*) FROM LocationData;")
+    cur.execute("SELECT COUNT(*) FROM LocationData WHERE label != 'DEFAULT_LONDON';")
     loc_count = cur.fetchone()[0]
 
     cur.execute("SELECT COUNT(*) FROM WeatherData;")
@@ -46,18 +53,34 @@ def main():
     LON = -0.13
     MONTH = "2023-09"
 
-    if crime_count == 0:
-        print("Fetching UK crimes...")
-        fetch_and_store_crimes(conn, MONTH, max_items=500)
+    if crime_count < MIN_CRIME_ROWS:
+        remaining = MIN_CRIME_ROWS - crime_count
+        fetch_limit = min(MAX_API_ITEMS_PER_RUN, remaining)
+        print(f"Fetching up to {fetch_limit} crimes (need {remaining} more to hit {MIN_CRIME_ROWS}).")
+        fetch_and_store_crimes(conn, MONTH, max_items=fetch_limit)
+        print("Re-run the script as needed to accumulate at least 100 crimes.")
     else:
-        print(f"CrimeData already populated ({crime_count} rows) → skipping fetch.")
+        print(f"CrimeData already satisfies minimum rows ({crime_count} rows).")
 
     # Reverse geocode only if needed
-    if loc_count == 0:
-        print("Reverse geocoding crime locations...")
-        geocode_and_attach_locations(conn, max_items=10)
+    if loc_count < MIN_LOCATION_ROWS:
+        remaining = MIN_LOCATION_ROWS - loc_count
+        per_run = min(MAX_API_ITEMS_PER_RUN, remaining)
+        released = release_default_location_links(conn, limit=per_run)
+        if released:
+            print(f"Released {released} previously defaulted crimes for re-geocoding.")
+        print(f"Reverse geocoding up to {per_run} crimes (need {remaining} more locations).")
+        geocode_and_attach_locations(conn, max_items=per_run)
+        cur.execute("SELECT COUNT(*) FROM LocationData WHERE label != 'DEFAULT_LONDON';")
+        loc_count = cur.fetchone()[0]
+        if loc_count >= MIN_LOCATION_ROWS:
+            print("Location minimum met. Assigning default location to remaining crimes.")
+            assign_default_location(conn)
+        else:
+            print("Re-run the script to continue building LocationData via TomTom.")
     else:
-        print("LocationData already populated → skipping geocoding.")
+        print("LocationData already satisfies the minimum rows.")
+        assign_default_location(conn)
 
     # Build weather date list
     print("Preparing weather date list...")
@@ -70,11 +93,16 @@ def main():
     DATES = sorted(set(DATES))
 
     # Fetch weather only if needed
-    if weather_count == 0:
-        print(f"Fetching weather for {len(DATES)} days across {len(crime_months)} months...")
+    if weather_count < MIN_WEATHER_ROWS:
+        remaining = MIN_WEATHER_ROWS - weather_count
+        per_run = min(MAX_API_ITEMS_PER_RUN, remaining)
+        print(f"Fetching weather chunk (max {per_run} rows). Need {remaining} more to reach {MIN_WEATHER_ROWS}.")
     else:
-        print("Refreshing weather data to ensure all dates/locations covered...")
-    fetch_weather_for_all_locations(conn, dates=DATES)
+        per_run = MAX_API_ITEMS_PER_RUN
+        print("WeatherData already meets minimum rows; refreshing limited chunk for recency.")
+    fetch_weather_for_all_locations(conn, dates=DATES, max_new_records=per_run)
+    if weather_count < MIN_WEATHER_ROWS:
+        print("Re-run the script to continue gathering weather records without exceeding per-run limits.")
 
     # Analysis
     print("Computing analysis...")
@@ -87,6 +115,9 @@ def main():
     # Visualizations
     print("Generating visualizations...")
     visualize_results(df_weather, df_temp, df_types, df_wind, df_rain)
+
+    print(f"Writing analysis summary to {REPORT_PATH} ...")
+    write_analysis_report(REPORT_PATH, df_weather, df_temp, df_types, df_wind, df_rain)
 
     print("Done! Visualizations saved.")
 

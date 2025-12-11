@@ -80,7 +80,4 @@ def geocode_and_attach_locations(conn, max_items=25):
 
         time.sleep(0.25)
 
-    # ALWAYS fill the rest
-    assign_default_location(conn)
-
-    print("TomTom geocoding complete.")
+    print("TomTom geocoding batch complete.")

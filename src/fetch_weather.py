@@ -104,7 +104,7 @@ def fetch_weather(lat, lon, date):
     }
 
 
-def fetch_weather_for_all_locations(conn, dates, max_items=None):
+def fetch_weather_for_all_locations(conn, dates, max_locations=None, max_new_records=25):
     """
     Fetch weather for each unique location in DB.
     """
@@ -113,18 +113,25 @@ def fetch_weather_for_all_locations(conn, dates, max_items=None):
         return
 
     unique_dates = sorted(set(dates))
-    locations = get_all_locations(conn, limit=max_items)
+    locations = get_all_locations(conn, limit=max_locations)
 
     if not locations:
         print("No locations available for weather fetch.")
         return
 
-    print(f"Fetching weather for {len(locations)} locations × {len(unique_dates)} days...")
+    print(f"Fetching weather for {len(locations)} locations × {len(unique_dates)} days (max {max_new_records} new rows)...")
+
+    inserted = 0
 
     for location_id, lat, lon in locations:
+        if inserted >= max_new_records:
+            break
         for date in unique_dates:
+            if inserted >= max_new_records:
+                break
             weather = fetch_weather(lat, lon, date)
             if weather:
                 weather["location_id"] = location_id
                 insert_weather(conn, weather)
-    print("Weather fetch complete.")
+                inserted += 1
+    print(f"Weather fetch complete ({inserted} new rows).")
