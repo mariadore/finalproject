@@ -43,7 +43,7 @@ def reverse_geocode(lat, lon, api_key):
     }
 
 
-def geocode_and_attach_locations(conn, api_key=POSITIONSTACK_API_KEY, max_items=25):
+def geocode_and_attach_locations(conn, api_key=POSITIONSTACK_API_KEY, max_items=50):
     """
     Finds CrimeData rows with location_id=NULL,
     reverse geocodes them, inserts LocationData,
