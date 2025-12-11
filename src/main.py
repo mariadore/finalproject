@@ -15,23 +15,21 @@ from src.analysis import (
 from src.visualize import visualize_results
 
 
-LAT = 51.509865
-LON = -0.118092
 MONTH = "2023-09"
 DATES = ["2023-09-01", "2023-09-02", "2023-09-03"]
 
 
 def main():
+    # -------------------------------
     # 1. DATABASE SETUP
-
+    # -------------------------------
     db_path, conn = set_up_database()
 
-    pos_key = os.environ.get("POSITIONSTACK_API_KEY")
-
+    # -------------------------------
     # 2. FETCH CRIME DATA
-   
+    # -------------------------------
     print("Fetching UK crime data...")
-    fetch_and_store_crimes(conn, LAT, LON, MONTH)
+    fetch_and_store_crimes(conn, MONTH)
 
     # 3. GEOCODE LOCATIONS
 
@@ -45,13 +43,14 @@ def main():
     has_locations = pd.read_sql_query("SELECT COUNT(*) AS n FROM LocationData;", conn).iloc[0]["n"]
 
     if has_locations > 0:
-        print("Fetching historical weather...")
+        print("Fetching historical weather (TomTom)...")
         fetch_weather_for_all_locations(conn, DATES)
     else:
-        print("No locations linked yet. Skipping weather fetch.")
+        print("No locations available — skipping weather.")
 
+    # -------------------------------
     # 5. RUN CALCULATIONS
- 
+    # -------------------------------
     print("Running analysis queries...")
 
     df_weather_types = calculate_crimes_by_weather(conn)
@@ -60,15 +59,17 @@ def main():
 
     print("Analysis DataFrames created successfully.")
 
+    # -------------------------------
     # 6. VISUALIZE
-    print("Creating visualizations...")
+    # -------------------------------
+    print("Generating visualizations...")
 
     visualize_results(
         df_weather_types,
         df_temp_bins,
         df_type_dist
     )
-    # 7. DONE
+
     conn.close()
     print("Project complete.")
 
