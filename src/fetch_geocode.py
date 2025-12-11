@@ -15,10 +15,11 @@ def reverse_geocode(lat, lon, api_key=TOMTOM_API_KEY):
     resp.raise_for_status()
     data = resp.json()
 
-    if not data.get("addresses"):
+    addresses= data.get("addresses")
+    if not addresses:
         return None
 
-    addr = data["addresses"][0]["address"]
+    addr = addresses[0]["address"]
 
     return {
         "city": addr.get("municipality"),
