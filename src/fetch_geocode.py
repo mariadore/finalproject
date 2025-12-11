@@ -2,6 +2,7 @@ import requests
 import time
 from .db_utils import insert_location, get_unlinked_crimes, link_crime_to_location
 
+#api 2: TomTom Reverse Geocoding API
 TOMTOM_API_KEY = "tfFYIYGPk25q0LqtkS2chNGRsdPWLA2y"
 TOMTOM_URL = "https://api.tomtom.com/search/2/reverseGeocode/{},{}.json"
 
