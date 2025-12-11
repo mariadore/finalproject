@@ -77,9 +77,8 @@ def plot_avg_crimes_per_weather(df_weather):
     plt.close()
 
 
-# ---------------------------
-# TEMPERATURE VS CRIME
-# ---------------------------
+# Temerature vs. crime
+
 def plot_crimes_vs_temperature(df_temp):
     if df_temp.empty:
         print("temperature df empty → skipping")
