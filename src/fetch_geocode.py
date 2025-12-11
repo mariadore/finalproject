@@ -42,31 +42,48 @@ def reverse_geocode(lat, lon, api_key=TOMTOM_API_KEY):
 
 
 def geocode_and_attach_locations(conn, max_items=25):
-    """
-    Gets crimes with no location_id,
-    reverse geocodes them using TomTom,
-    inserts into LocationData,
-    updates CrimeData.
-    """
     crimes = get_unlinked_crimes(conn, limit=max_items)
 
-    print(f"Geocoding {len(crimes)} crimes using TomTom API...")
+    print(f"Attempting TomTom geocoding for {len(crimes)} crimes...")
 
     for crime_pk, crime_uid, lat, lon in crimes:
         geo = reverse_geocode(lat, lon)
-
         if geo:
             location_id = insert_location(
-                conn,
-                geo["city"],
-                geo["county"],
-                geo["region"],
-                geo["lat"],
-                geo["lon"],
-                geo["label"]
+                conn, geo["city"], geo["county"], geo["region"],
+                geo["lat"], geo["lon"], geo["label"]
             )
             link_crime_to_location(conn, crime_pk, location_id)
 
-        time.sleep(0.3)  # respectful delay
+        time.sleep(0.3)
 
+    assign_default_location(conn)
     print("TomTom geocoding complete.")
+
+
+def assign_default_location(conn, lat=51.509865, lon=-0.118092):
+    """
+    Assigns a single synthetic 'London' location to all crimes missing location_id.
+    """
+    cur = conn.cursor()
+
+    # Make sure a default location exists
+    cur.execute("""
+        INSERT OR IGNORE INTO LocationData (city, county, region, lat, lon, label)
+        VALUES ('London', 'Greater London', 'London', ?, ?, 'Default London')
+    """, (lat, lon))
+    conn.commit()
+
+    # Get the id of this location
+    cur.execute("SELECT location_id FROM LocationData WHERE label='Default London'")
+    default_loc = cur.fetchone()[0]
+
+    # Assign all crimes that still have NULL location_id
+    cur.execute("""
+        UPDATE CrimeData
+        SET location_id = ?
+        WHERE location_id IS NULL
+    """, (default_loc,))
+    conn.commit()
+
+    print("Assigned default location to all un-geocoded crimes.")
