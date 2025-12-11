@@ -25,9 +25,7 @@ def main():
     #1. Database setup
     db_path, conn = set_up_database()
 
-    # -------------------------------
-    # 2. FETCH CRIME DATA
-    # -------------------------------
+    # 2. Fetch crime data
     print("Fetching UK crime data...")
     fetch_and_store_crimes(conn, MONTH)
 
