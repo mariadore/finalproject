@@ -1,4 +1,5 @@
 import calendar
+import random
 from src.db_utils import set_up_database
 from src.fetch_crime import fetch_and_store_crimes
 from src.fetch_geocode import geocode_and_attach_locations
@@ -12,9 +13,7 @@ from src.visualize import visualize_results
 
 
 def expand_month_to_dates(month_str):
-    """
-    Convert a crime month (YYYY-MM) → list of YYYY-MM-DD dates.
-    """
+    """Convert a crime month (YYYY-MM) → list of YYYY-MM-DD dates."""
     year, month = map(int, month_str.split("-"))
     num_days = calendar.monthrange(year, month)[1]
     return [f"{year}-{month:02d}-{day:02d}" for day in range(1, num_days + 1)]
@@ -30,32 +29,50 @@ def main():
     print("Setting up database...")
     db_path, conn = set_up_database()
 
-    # Fetch Crime Data (using lat/lon for London)
-    print("Fetching UK crimes...")
-    # Westminster coordinates
+    # Check existing table counts
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM CrimeData;")
+    crime_count = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM LocationData;")
+    loc_count = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM WeatherData;")
+    weather_count = cur.fetchone()[0]
+
+    # Fetch crime data only if needed
     LAT = 51.515
     LON = -0.13
     MONTH = "2023-09"
 
-    fetch_and_store_crimes(conn, LAT, LON, MONTH, max_items=50)
+    if crime_count == 0:
+        print("Fetching UK crimes...")
+        fetch_and_store_crimes(conn, LAT, LON, MONTH, max_items=50)
+    else:
+        print(f"CrimeData already populated ({crime_count} rows) → skipping fetch.")
 
-    # Reverse Geocode Lat/Lon → City/Region
-    print("Reverse geocoding crime locations...")
-    geocode_and_attach_locations(conn, max_items=5)
+    # Reverse geocode only if needed
+    if loc_count == 0:
+        print("Reverse geocoding crime locations...")
+        geocode_and_attach_locations(conn, max_items=5)
+    else:
+        print("LocationData already populated → skipping geocoding.")
 
-    # Expand crime months
+    # Build weather date list
     print("Preparing weather date list...")
     crime_months = get_unique_crime_months(conn)
-
     DATES = []
+
     for m in crime_months:
-        DATES.extend(expand_month_to_dates(m)[:5])  # first 5 days only
+        all_days = expand_month_to_dates(m)
+        DATES.extend(random.sample(all_days, 5))  # random 5 days per month
 
-    print(f"Fetching weather for {len(DATES)} days...")
-
-    # Fetch Weather for All Locations/Dates
-    print("Fetching weather...")
-    fetch_weather_for_all_locations(conn, dates=DATES, max_items=5)
+    # Fetch weather only if needed
+    if weather_count == 0:
+        print(f"Fetching weather for {len(DATES)} days...")
+        fetch_weather_for_all_locations(conn, dates=DATES, max_items=5)
+    else:
+        print("WeatherData already populated → skipping weather fetch.")
 
     # Analysis
     print("Computing analysis...")
