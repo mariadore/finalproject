@@ -156,9 +156,6 @@ def insert_weather(conn, weather):
 
 
 def get_unlinked_crimes(conn, limit=25):
-    """
-    Return crimes that do not yet have a resolved location_id.
-    """
     cur = conn.cursor()
     cur.execute("""
         SELECT id, crime_id, latitude, longitude

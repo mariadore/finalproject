@@ -1,28 +1,50 @@
 import requests
 import time
-import json
-import os
 from .db_utils import insert_crime
 
 UK_POLICE_BASE = "https://data.police.uk/api"
 
 
-def fetch_crimes(lat, lon, month):
+# ------------------------------------------------------------
+# POLYGON FOR CENTRAL LONDON (Westminster / Waterloo / Soho)
+# ------------------------------------------------------------
+DEFAULT_LONDON_POLY = (
+    "51.520,-0.155:"
+    "51.510,-0.155:"
+    "51.500,-0.135:"
+    "51.495,-0.115:"
+    "51.500,-0.095:"
+    "51.510,-0.095:"
+    "51.520,-0.115"
+)
+
+
+def fetch_crimes_poly(poly, month):
+    """
+    Fetch UK Police API crimes using polygon instead of lat/lon.
+    Returns full crime list for the polygon area.
+    """
+
     url = f"{UK_POLICE_BASE}/crimes-street/all-crime"
-    params = {"lat": lat, "lng": lon, "date": month}
+    params = {"poly": poly, "date": month}
+
     try:
+        print(f"Fetching crimes for polygon area ({month})…")
         resp = requests.get(url, params=params, timeout=30)
         resp.raise_for_status()
         return resp.json()
+
     except Exception as e:
-        print("Live API failed, using local sample data instead.")
-        import json
+        print("⚠ Polygon API failed:", e)
+        print("Using fallback sample data instead.")
         with open("data/sample_crimes.json") as f:
+            import json
             return json.load(f)
 
 
 def normalize_crime(raw):
-    """Convert UK Police API format → database-ready dict."""
+    """Convert UK Police API format → normalized dictionary."""
+
     loc = raw.get("location") or {}
     street = loc.get("street") or {}
     outcome = raw.get("outcome_status") or {}
@@ -42,15 +64,27 @@ def normalize_crime(raw):
     }
 
 
-def fetch_and_store_crimes(conn, lat, lon, month, max_items=25):
+def fetch_and_store_crimes(conn, month, poly=DEFAULT_LONDON_POLY, max_items=500):
     """
-    Fetch crimes & insert up to max_items into CrimeData table.
+    Fetch crime data from API (polygon) and store in database.
+    - Uses polygon to fetch crimes covering a larger London area
+    - Stores up to `max_items` crimes
     """
-    crimes = fetch_crimes(lat, lon, month)
+
+    crimes = fetch_crimes_poly(poly, month)
+
+    if not crimes:
+        print("⚠ No crimes received from API.")
+        return
+
     crimes = crimes[:max_items]
+
+    print(f"Inserting {len(crimes)} crime rows into database...")
 
     for raw in crimes:
         crime = normalize_crime(raw)
         insert_crime(conn, crime)
 
+    # small delay for safety
     time.sleep(1)
+    print("Crime data inserted successfully.")
