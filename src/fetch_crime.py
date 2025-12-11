@@ -81,7 +81,7 @@ def fetch_and_store_crimes(conn, month, poly=DEFAULT_LONDON_POLY, max_items=25):
     print(f"Inserting {len(crimes)} crime rows into database...")
 
     for row in crimes:
-        crime = normalize_crime(raw)
+        crime = normalize_crime(row)
         insert_crime(conn, crime)
 
     # small delay for safety

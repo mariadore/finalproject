@@ -49,6 +49,14 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
         );
     """)
 
+    # StreetData table (normalized street metadata from UK Police API)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS StreetData (
+            street_id INTEGER PRIMARY KEY,
+            street_name TEXT
+        );
+    """)
+
     # WeatherData table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS WeatherData (
@@ -97,6 +105,7 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
     cur.execute("CREATE INDEX IF NOT EXISTS idx_transit_lat_lon ON TransitStops(lat, lon);")
 
     populate_missing_crime_dates(conn)
+    migrate_street_data(conn)
 
     conn.commit()
     print("Database and tables created successfully.")
@@ -128,6 +137,11 @@ def insert_crime(conn, crime):
     """
     Insert a normalized UK Police API crime dict into CrimeData.
     """
+    street_id = crime.get("street_id")
+    street_name = crime.get("street_name")
+    if street_id is not None:
+        upsert_street(conn, street_id, street_name)
+
     crime_date = derive_crime_date(
         crime.get("month"),
         crime.get("crime_id") or crime.get("persistent_id") or crime.get("street_id") or crime.get("category")
@@ -148,8 +162,8 @@ def insert_crime(conn, crime):
         crime.get("category"),
         crime.get("latitude"),
         crime.get("longitude"),
-        crime.get("street_id"),
-        crime.get("street_name"),
+        street_id,
+        None,
         crime.get("outcome_category"),
         crime.get("outcome_date"),
         crime_date,
@@ -349,4 +363,46 @@ def populate_missing_crime_dates(conn):
             (crime_date, pk)
         )
 
+    conn.commit()
+
+
+def upsert_street(conn, street_id, street_name):
+    """
+    Ensure StreetData stores each street once (UK Police API requirement).
+    """
+    if street_id is None:
+        return
+
+    normalized_name = street_name.strip() if isinstance(street_name, str) else street_name
+    if normalized_name == "":
+        normalized_name = None
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO StreetData (street_id, street_name)
+        VALUES (?, ?)
+        ON CONFLICT(street_id) DO UPDATE
+        SET street_name = COALESCE(excluded.street_name, street_name)
+    """, (street_id, normalized_name))
+    conn.commit()
+
+
+def migrate_street_data(conn):
+    """
+    Backfill StreetData from any legacy records.
+    """
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT OR IGNORE INTO StreetData (street_id, street_name)
+        SELECT DISTINCT street_id, street_name
+        FROM CrimeData
+        WHERE street_id IS NOT NULL
+          AND TRIM(COALESCE(street_name, '')) != ''
+    """)
+    conn.commit()
+
+    cur.execute("""
+        UPDATE CrimeData
+        SET street_name = NULL
+        WHERE TRIM(COALESCE(street_name, '')) != ''
+    """)
     conn.commit()
