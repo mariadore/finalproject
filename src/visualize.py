@@ -19,9 +19,7 @@ def detect_crime_column(df, preferred=None):
     return None
 
 
-# ---------------------------
-# AVERAGE CRIMES PER WEATHER
-# ---------------------------
+# Average crimes per weather
 def plot_avg_crimes_per_weather(df_weather):
     if df_weather.empty:
         print("weather df empty → skipping")
