@@ -6,7 +6,9 @@ from src.fetch_weather import fetch_weather_for_all_locations
 from src.analysis import (
     calculate_crimes_by_weather,
     calculate_crimes_by_temperature_bins,
-    calculate_crime_type_distribution
+    calculate_crime_type_distribution,
+    calculate_crimes_vs_wind,
+    calculate_precipitation_effect
 )
 from src.visualize import visualize_results
 
@@ -79,10 +81,12 @@ def main():
     df_weather = calculate_crimes_by_weather(conn)
     df_temp = calculate_crimes_by_temperature_bins(conn)
     df_types = calculate_crime_type_distribution(conn)
+    df_wind = calculate_crimes_vs_wind(conn)
+    df_rain = calculate_precipitation_effect(conn)
 
     # Visualizations
     print("Generating visualizations...")
-    visualize_results(df_weather, df_temp, df_types)
+    visualize_results(df_weather, df_temp, df_types, df_wind, df_rain)
 
     print("Done! Visualizations saved.")
 

@@ -62,21 +62,39 @@ def plot_crimes_vs_temperature(df_temp):
 
     col = detect_crime_column(df_temp, "total_crimes")
 
-    x = np.arange(len(df_temp))
-    y = df_temp[col]
-
     plt.figure(figsize=(12, 6))
-    plt.scatter(x, y, s=200, c=y, cmap="coolwarm", edgecolors="black")
 
-    if len(df_temp) > 1:
-        z = np.polyfit(x, y, 1)
-        p = np.poly1d(z)
-        plt.plot(x, p(x), linestyle="--", color="gray")
+    if "temp_c" in df_temp.columns:
+        x = df_temp["temp_c"]
+        y = df_temp[col]
+        plt.scatter(x, y, s=60, c=y, cmap="coolwarm", edgecolors="black", alpha=0.8)
 
-    plt.title("Crimes by Temperature Range", fontsize=18, weight="bold")
-    plt.xlabel("Temperature Bin (°C)", fontsize=14)
+        if len(df_temp) > 1:
+            try:
+                z = np.polyfit(x, y, 1)
+                plt.plot(x, np.poly1d(z)(x), linestyle="--", color="gray")
+            except np.linalg.LinAlgError:
+                pass
+
+        plt.xlabel("Average Temperature (°C)", fontsize=14)
+        plt.title("Crimes vs Temperature (per location/day)", fontsize=18, weight="bold")
+    else:
+        # Fallback to bin-based display
+        x = np.arange(len(df_temp))
+        y = df_temp[col]
+
+        plt.scatter(x, y, s=200, c=y, cmap="coolwarm", edgecolors="black")
+
+        if len(df_temp) > 1:
+            z = np.polyfit(x, y, 1)
+            p = np.poly1d(z)
+            plt.plot(x, p(x), linestyle="--", color="gray")
+
+        plt.xticks(x, df_temp["temp_bin"], rotation=15)
+        plt.xlabel("Temperature Bin (°C)", fontsize=14)
+        plt.title("Crimes by Temperature Range", fontsize=18, weight="bold")
+
     plt.ylabel("Total Crimes", fontsize=14)
-    plt.xticks(x, df_temp["temp_bin"], rotation=15)
 
     plt.tight_layout()
     plt.savefig("temp_vs_crime.png", dpi=300)
@@ -98,6 +116,20 @@ def plot_crime_type_distribution(df_types):
         aggfunc="sum",
         fill_value=0
     )
+
+    if pivot.shape[1] <= 1:
+        # Only a single category present → show raw counts instead of a flat 100% stack.
+        plt.figure(figsize=(12, 6))
+        series = pivot.iloc[:, 0]
+        plt.bar(series.index, series.values, color="steelblue", edgecolor="black")
+        plt.title("Crime Counts by Weather", fontsize=18, weight="bold")
+        plt.xlabel("Weather", fontsize=14)
+        plt.ylabel("Total Crimes", fontsize=14)
+        plt.xticks(rotation=20)
+        plt.tight_layout()
+        plt.savefig("crime_type_stacked.png", dpi=300)
+        plt.close()
+        return
 
     pivot_pct = pivot.div(pivot.sum(axis=1), axis=0)
 

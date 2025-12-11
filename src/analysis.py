@@ -29,24 +29,21 @@ def calculate_crimes_by_weather(conn):
 
 def calculate_crimes_by_temperature_bins(conn):
     """
-    Group crimes by temperature_bin:
-        <5°C, 5–10°C, 10–15°C, 15–20°C, >20°C
+    Return per-location, per-day crime counts linked to the actual average
+    temperature for that day. This gives many data points for visualization.
     """
     query = """
         SELECT
-            CASE
-                WHEN W.temp_c < 5 THEN '<5°C'
-                WHEN W.temp_c BETWEEN 5 AND 10 THEN '5–10°C'
-                WHEN W.temp_c BETWEEN 10 AND 15 THEN '10–15°C'
-                WHEN W.temp_c BETWEEN 15 AND 20 THEN '15–20°C'
-                ELSE '>20°C'
-            END AS temp_bin,
+            W.location_id,
+            W.date AS weather_date,
+            W.temp_c,
             COUNT(C.id) AS total_crimes
-        FROM CrimeData C
-        JOIN WeatherData W ON C.location_id = W.location_id
-                           AND C.crime_date = W.date
-        GROUP BY temp_bin
-        ORDER BY total_crimes DESC;
+        FROM WeatherData W
+        LEFT JOIN CrimeData C ON C.location_id = W.location_id
+                             AND C.crime_date = W.date
+        WHERE W.temp_c IS NOT NULL
+        GROUP BY W.location_id, W.date, W.temp_c
+        ORDER BY W.date ASC, W.location_id ASC;
     """
 
     df = pd.read_sql_query(query, conn)

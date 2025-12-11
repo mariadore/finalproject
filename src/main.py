@@ -9,7 +9,9 @@ from src.fetch_weather import fetch_weather_for_all_locations
 from src.analysis import (
     calculate_crimes_by_weather,
     calculate_crimes_by_temperature_bins,
-    calculate_crime_type_distribution
+    calculate_crime_type_distribution,
+    calculate_crimes_vs_wind,
+    calculate_precipitation_effect
 )
 
 from src.visualize import visualize_results
@@ -56,6 +58,8 @@ def main():
     df_weather_types = calculate_crimes_by_weather(conn)
     df_temp_bins = calculate_crimes_by_temperature_bins(conn)
     df_type_dist = calculate_crime_type_distribution(conn)
+    df_wind = calculate_crimes_vs_wind(conn)
+    df_precip = calculate_precipitation_effect(conn)
 
     print("Analysis DataFrames created successfully.")
 
@@ -67,7 +71,9 @@ def main():
     visualize_results(
         df_weather_types,
         df_temp_bins,
-        df_type_dist
+        df_type_dist,
+        df_wind,
+        df_precip
     )
 
     conn.close()
