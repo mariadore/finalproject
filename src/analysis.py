@@ -105,9 +105,32 @@ def calculate_precipitation_effect(conn):
     return pd.read_sql_query(query, conn)
 
 
+STOP_TYPE_MODE_MAP = {
+    "NaptanMetroStation": "tube",
+    "NaptanRailStation": "rail",
+    "NaptanBusCoachStation": "bus",
+    "NaptanPublicBusCoachTram": "bus",
+    "NaptanFerryPort": "river",
+    "NaptanAirAccessArea": "air"
+}
+
+
+def _split_modes(modes_str, stop_type):
+    if not modes_str:
+        fallback = STOP_TYPE_MODE_MAP.get(stop_type)
+        return [fallback] if fallback else []
+    modes = [m.strip() for m in modes_str.split(",") if m.strip()]
+    if modes:
+        return modes
+    fallback = STOP_TYPE_MODE_MAP.get(stop_type)
+    return [fallback] if fallback else []
+
+
 def calculate_crimes_near_transit(conn):
     """
     Count crimes occurring near TfL transit stops (bounding-box proximity).
+    Crimes at multi-mode stops are distributed across each mode they serve so the
+    visualization can highlight more than one transit category.
     """
     query = """
         SELECT
@@ -115,9 +138,9 @@ def calculate_crimes_near_transit(conn):
             T.common_name,
             T.modes,
             T.stop_type,
-            COUNT(C.id) AS crime_count
+            COALESCE(COUNT(C.id), 0) AS crime_count
         FROM TransitStops T
-        JOIN CrimeData C
+        LEFT JOIN CrimeData C
           ON C.latitude IS NOT NULL
          AND C.longitude IS NOT NULL
          AND ABS(C.latitude - T.lat) <= 0.01
@@ -130,7 +153,22 @@ def calculate_crimes_near_transit(conn):
     if df.empty:
         return df
 
-    df["primary_mode"] = df["modes"].fillna("unknown").apply(lambda m: m.split(",")[0] if m else "unknown")
-    grouped = df.groupby("primary_mode", as_index=False)["crime_count"].sum()
-    grouped = grouped.sort_values("crime_count", ascending=False).reset_index(drop=True)
+    df["mode_list"] = df.apply(lambda row: _split_modes(row["modes"], row["stop_type"]), axis=1)
+    df["mode_count"] = df["mode_list"].apply(lambda lst: len(lst) if lst else 1)
+    df["mode_list"] = df["mode_list"].apply(lambda lst: lst if lst else ["unknown"])
+
+    exploded = df.explode("mode_list").rename(columns={"mode_list": "mode"})
+    exploded["weighted_crimes"] = exploded["crime_count"] / exploded["mode_count"].clip(lower=1)
+
+    grouped = (
+        exploded.groupby("mode", as_index=False)
+                .agg(
+                    crime_count=("weighted_crimes", "sum"),
+                    stop_count=("stop_id", "nunique")
+                )
+                .sort_values("crime_count", ascending=False)
+                .reset_index(drop=True)
+    )
+    grouped["crime_count"] = grouped["crime_count"].round(2)
+    grouped["avg_crimes_per_stop"] = grouped["crime_count"] / grouped["stop_count"].clip(lower=1)
     return grouped

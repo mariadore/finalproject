@@ -21,4 +21,4 @@ Precipitation Effects:
 
 Transit Proximity:
   Modes represented → 1
-  Highest crime mode → tube: 2971
+  Highest crime mode → tube: 2971.00

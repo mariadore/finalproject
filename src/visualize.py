@@ -322,23 +322,56 @@ def plot_crimes_vs_transit(df_transit):
         print("transit df empty → skipping")
         return
 
-    plt.figure(figsize=(11, 6))
-    bars = plt.bar(df_transit["primary_mode"],
-                   df_transit["crime_count"],
-                   color=plt.cm.Purples(np.linspace(0.4, 0.9, len(df_transit))),
-                   edgecolor="black")
+    df = df_transit.copy().sort_values("crime_count", ascending=False).reset_index(drop=True)
+    x = np.arange(len(df))
+    colors = plt.cm.Purples(np.linspace(0.4, 0.9, len(df)))
 
-    for bar in bars:
-        plt.text(bar.get_x() + bar.get_width()/2,
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+    bars = ax1.bar(x,
+                   df["crime_count"],
+                   color=colors,
+                   edgecolor="black",
+                   width=0.6,
+                   label="Total Crimes")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(df["mode"])
+    ax1.set_xlabel("TfL Mode", fontsize=14)
+    ax1.set_ylabel("Total Crimes (within ~1 km)", fontsize=14, color="#4b2c7f")
+    ax1.tick_params(axis="y", colors="#4b2c7f")
+    ax1.grid(axis="y", linestyle=":", alpha=0.4)
+
+    if "avg_crimes_per_stop" in df.columns:
+        ax2 = ax1.twinx()
+        ax2.plot(x,
+                 df["avg_crimes_per_stop"],
+                 color="#f39c12",
+                 marker="o",
+                 linewidth=2.2,
+                 label="Avg Crimes per Stop")
+        ax2.set_ylabel("Avg Crimes per Stop", fontsize=14, color="#f39c12")
+        ax2.tick_params(axis="y", colors="#f39c12")
+    else:
+        ax2 = None
+
+    for idx, bar in enumerate(bars):
+        text = f"{int(bar.get_height())}"
+        if "stop_count" in df.columns:
+            text += f"\n({int(df.iloc[idx]['stop_count'])} stops)"
+        ax1.text(bar.get_x() + bar.get_width()/2,
                  bar.get_height() + max(bar.get_height() * 0.02, 0.5),
-                 f"{int(bar.get_height())}",
+                 text,
                  ha="center",
-                 va="bottom")
+                 va="bottom",
+                 fontsize=11)
+
+    handles, labels = ax1.get_legend_handles_labels()
+    if ax2:
+        h2, l2 = ax2.get_legend_handles_labels()
+        handles += h2
+        labels += l2
+    ax1.legend(handles, labels, loc="upper right", frameon=True)
 
     plt.title("Crimes Near Transit Stops by Mode", fontsize=18, weight="bold")
-    plt.xlabel("Primary TfL Mode", fontsize=14)
-    plt.ylabel("Crimes within ~1km", fontsize=14)
-    plt.grid(axis="y", linestyle=":", alpha=0.4)
     plt.tight_layout()
     plt.savefig("transit_vs_crime.png", dpi=300)
     plt.close()
