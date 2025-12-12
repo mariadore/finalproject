@@ -191,3 +191,30 @@ def calculate_crimes_near_transit(conn):
         grouped = grouped.sort_values("crime_count", ascending=False).reset_index(drop=True)
 
     return grouped
+
+
+def calculate_transit_stop_hotspots(conn, limit=15):
+    """
+    Return the top transit stops (TfL) ranked by number of nearby crimes.
+    """
+    query = """
+        SELECT
+            T.stop_id,
+            T.common_name,
+            T.stop_type,
+            T.modes,
+            T.lat,
+            T.lon,
+            COUNT(C.id) AS crime_count
+        FROM TransitStops T
+        LEFT JOIN CrimeData C
+          ON C.latitude IS NOT NULL
+         AND C.longitude IS NOT NULL
+         AND ABS(C.latitude - T.lat) <= 0.01
+         AND ABS(C.longitude - T.lon) <= 0.01
+        GROUP BY T.stop_id
+        ORDER BY crime_count DESC, T.common_name ASC
+        LIMIT ?
+    """
+
+    return pd.read_sql_query(query, conn, params=(limit,))

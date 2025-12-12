@@ -145,83 +145,6 @@ def plot_crimes_vs_temperature(df_temp):
 
 # Crime type distribution
 
-def plot_crime_type_distribution(df_types):
-    if df_types.empty:
-        print("type df empty → skipping")
-        return
-
-    pivot = df_types.pivot_table(
-        index="weather_main",
-        columns="category",
-        values="crime_count",
-        aggfunc="sum",
-        fill_value=0
-    )
-
-    if pivot.shape[1] <= 1:
-        # Only a single category present → show raw counts instead of a flat 100% stack.
-        plt.figure(figsize=(12, 6))
-        series = pivot.iloc[:, 0]
-        plt.bar(series.index, series.values, color="steelblue", edgecolor="black")
-        plt.title("Crime Counts by Weather", fontsize=18, weight="bold")
-        plt.xlabel("Weather", fontsize=14)
-        plt.ylabel("Total Crimes", fontsize=14)
-        plt.xticks(rotation=20)
-        plt.tight_layout()
-        plt.savefig("crime_type_stacked.png", dpi=300)
-        plt.close()
-        return
-
-    totals = pivot.sum(axis=1)
-    pivot_pct = pivot.div(totals, axis=0)
-
-    fig, ax1 = plt.subplots(figsize=(14, 8))
-    x = np.arange(len(pivot_pct))
-    bottom = np.zeros(len(pivot_pct))
-    colors = plt.cm.tab20(np.linspace(0, 1, len(pivot_pct.columns)))
-
-    for idx, category in enumerate(pivot_pct.columns):
-        vals = pivot_pct[category].values
-        ax1.bar(x,
-                vals * 100,
-                bottom=bottom * 100,
-                label=category,
-                color=colors[idx],
-                edgecolor="white")
-        bottom += vals
-
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(pivot_pct.index, rotation=20)
-    ax1.set_ylabel("Percentage of Crimes (%)", fontsize=14)
-    ax1.set_xlabel("Weather", fontsize=14)
-    ax1.set_title("Crime Type Distribution by Weather (stacked %) + Totals (line)", fontsize=18, weight="bold")
-    ax1.set_ylim(0, 105)
-
-    ax2 = ax1.twinx()
-    ax2.plot(x, totals.values, color="black", linewidth=2.2, marker="o", label="Total Crimes")
-    ax2.set_ylabel("Total Crimes", fontsize=14)
-
-    for idx, total in enumerate(totals.values):
-        ax2.text(x[idx], total + max(total * 0.02, 1),
-                 f"{int(total)}",
-                 ha="center",
-                 va="bottom",
-                 fontsize=11,
-                 color="black")
-
-    handles1, labels1 = ax1.get_legend_handles_labels()
-    handles2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(handles1 + handles2, labels1 + labels2,
-               title="Crime Categories",
-               bbox_to_anchor=(1.02, 1),
-               loc="upper left",
-               frameon=True)
-
-    plt.tight_layout()
-    plt.savefig("crime_type_stacked.png", dpi=300)
-    plt.close()
-
-
 def plot_crimes_vs_wind(df_wind):
     if df_wind is None or df_wind.empty:
         print("wind df empty → skipping")
@@ -309,74 +232,43 @@ def plot_precipitation_effect(df_rain):
     plt.savefig("precip_vs_crime.png", dpi=300)
     plt.close()
 
-def plot_crimes_vs_transit(df_transit):
-    if df_transit is None or df_transit.empty:
-        print("transit df empty → skipping")
+def plot_transit_hotspots(df_hotspots):
+    if df_hotspots is None or df_hotspots.empty:
+        print("transit hotspots empty → skipping")
         return
 
-    df = df_transit.copy().sort_values("crime_count", ascending=False).reset_index(drop=True)
-    x = np.arange(len(df))
-    colors = plt.cm.Purples(np.linspace(0.4, 0.9, len(df)))
+    df = df_hotspots.copy().head(15)
+    df = df.sort_values("crime_count", ascending=True)
+    labels = df["common_name"].fillna("Unknown Stop")
+    colors = plt.cm.magma(np.linspace(0.3, 0.9, len(df)))
 
-    fig, ax1 = plt.subplots(figsize=(12, 6))
-    bars = ax1.bar(x,
-                   df["crime_count"],
-                   color=colors,
-                   edgecolor="black",
-                   width=0.6,
-                   label="Total Crimes")
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(df["mode"])
-    ax1.set_xlabel("TfL Mode", fontsize=14)
-    ax1.set_ylabel("Total Crimes (within ~1 km)", fontsize=14, color="#4b2c7f")
-    ax1.tick_params(axis="y", colors="#4b2c7f")
-    ax1.grid(axis="y", linestyle=":", alpha=0.4)
-
-    if "avg_crimes_per_stop" in df.columns:
-        ax2 = ax1.twinx()
-        ax2.plot(x,
-                 df["avg_crimes_per_stop"],
-                 color="#f39c12",
-                 marker="o",
-                 linewidth=2.2,
-                 label="Avg Crimes per Stop")
-        ax2.set_ylabel("Avg Crimes per Stop", fontsize=14, color="#f39c12")
-        ax2.tick_params(axis="y", colors="#f39c12")
-    else:
-        ax2 = None
+    plt.figure(figsize=(12, 7))
+    bars = plt.barh(labels, df["crime_count"], color=colors, edgecolor="black")
 
     for idx, bar in enumerate(bars):
-        text = f"{int(bar.get_height())}"
-        if "stop_count" in df.columns:
-            text += f"\n({int(df.iloc[idx]['stop_count'])} stops)"
-        ax1.text(bar.get_x() + bar.get_width()/2,
-                 bar.get_height() + max(bar.get_height() * 0.02, 0.5),
-                 text,
-                 ha="center",
-                 va="bottom",
-                 fontsize=11)
+        modes = df.iloc[idx]["modes"] or df.iloc[idx]["stop_type"]
+        plt.text(bar.get_width() + max(df["crime_count"].max() * 0.01, 1),
+                 bar.get_y() + bar.get_height()/2,
+                 f"{int(bar.get_width())} crimes\n{modes}",
+                 va="center",
+                 fontsize=10)
 
-    handles, labels = ax1.get_legend_handles_labels()
-    if ax2:
-        h2, l2 = ax2.get_legend_handles_labels()
-        handles += h2
-        labels += l2
-    ax1.legend(handles, labels, loc="upper right", frameon=True)
-
-    plt.title("Crimes Near Transit Stops by Mode", fontsize=18, weight="bold")
+    plt.xlabel("Crimes within ~1 km", fontsize=14)
+    plt.ylabel("TfL Stop", fontsize=14)
+    plt.title("Top Transit Stops by Nearby Crimes", fontsize=18, weight="bold")
+    plt.grid(axis="x", linestyle=":", alpha=0.4)
     plt.tight_layout()
-    plt.savefig("transit_vs_crime.png", dpi=300)
+    plt.savefig("transit_hotspots.png", dpi=300)
     plt.close()
 
 
 # All visualizations 
 
-def visualize_results(df_weather, df_temp, df_types, df_wind=None, df_rain=None, df_transit=None):
+def visualize_results(df_weather, df_temp, df_types, df_wind=None, df_rain=None, df_transit=None, df_transit_hotspots=None):
     print("Creating visualizations…")
     plot_avg_crimes_per_weather(df_weather)
     plot_crimes_vs_temperature(df_temp)
-    plot_crime_type_distribution(df_types)
     plot_crimes_vs_wind(df_wind)
     plot_precipitation_effect(df_rain)
-    plot_crimes_vs_transit(df_transit)
+    plot_transit_hotspots(df_transit_hotspots)
     print("Visualizations saved!")

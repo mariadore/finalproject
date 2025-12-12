@@ -17,7 +17,8 @@ from src.analysis import (
     calculate_crime_type_distribution,
     calculate_crimes_vs_wind,
     calculate_precipitation_effect,
-    calculate_crimes_near_transit
+    calculate_crimes_near_transit,
+    calculate_transit_stop_hotspots
 )
 from src.report import write_analysis_report
 from src.visualize import visualize_results
@@ -106,7 +107,7 @@ def main():
             {
                 "stop_types": "NaptanRailStation",
                 "coords": (51.503, -0.112),
-                "modes": ("rail", "overground", "national-rail")
+                "modes": ("overground",)
             },
             {
                 "stop_types": "NaptanBusCoachStation",
@@ -188,10 +189,11 @@ def main():
     df_wind = calculate_crimes_vs_wind(conn)
     df_rain = calculate_precipitation_effect(conn)
     df_transit = calculate_crimes_near_transit(conn)
+    df_transit_hotspots = calculate_transit_stop_hotspots(conn)
 
     # Visualizations
     print("Generating visualizations...")
-    visualize_results(df_weather, df_temp, df_types, df_wind, df_rain, df_transit)
+    visualize_results(df_weather, df_temp, df_types, df_wind, df_rain, df_transit, df_transit_hotspots)
 
     print(f"Writing analysis summary to {REPORT_PATH} ...")
     write_analysis_report(REPORT_PATH, df_weather, df_temp, df_types, df_wind, df_rain, df_transit)
