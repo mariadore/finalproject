@@ -10,7 +10,7 @@ interpretation.
 import pandas as pd
 
 
-
+# Crime and weather relationship analysis
 def calculate_crimes_by_weather(conn):
     """
     Join WeatherData → CrimeData to ensure every weather type
@@ -128,7 +128,7 @@ EXPECTED_TRANSIT_MODES = sorted({
     "overground", "dlr", "coach", "river-bus", "river-tour",
     "cable-car", "national-rail"
 } | set(STOP_TYPE_MODE_MAP.values()))
-
+# Transit stop crime analysis (TfL multi-mode support)
 
 def _split_modes(modes_str, stop_type):
     """
