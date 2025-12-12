@@ -1,3 +1,11 @@
+"""
+db_utils.py
+
+Utility functions for creating, migrating, and maintaining the SQLite database
+used for crime, weather, and transit analysis. Includes insert helpers, schema
+migrations, and API cursor tracking utilities.
+"""
+
 import sqlite3
 import os
 import calendar
