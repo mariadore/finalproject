@@ -124,7 +124,7 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
 # INSERT / UPDATE HELPERS
 # -----------------------
 
-def insert_location(conn, city, county, region, lat, lon, label):
+def insert_location(conn, city, county, region, lat, lon, label) -> int:
     """
     Insert or return existing LocationData entry.
     Returns location_id.
@@ -141,7 +141,7 @@ def insert_location(conn, city, county, region, lat, lon, label):
     return row[0] if row else None
 
 
-def insert_crime(conn, crime):
+def insert_crime(conn, crime: dict) -> None:
     """
     Insert a normalized UK Police API crime dict into CrimeData.
     """
@@ -199,7 +199,8 @@ def derive_crime_date(month_str, seed_value):
     return f"{year:04d}-{month:02d}-{day:02d}"
 
 
-def insert_weather(conn, weather):
+def insert_weather(conn, weather: dict) -> None:
+
     """
     Insert weather row into WeatherData. Skips duplicates based on UNIQUE(location_id, date).
     """
