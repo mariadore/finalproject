@@ -16,6 +16,8 @@ def calculate_crimes_by_weather(conn):
     Join WeatherData → CrimeData to ensure every weather type
     appears even if it has zero linked crimes.
     """
+    # SQL: Aggregate crimes grouped by weather category with per-day normalization
+
     query = """
         SELECT 
             W.weather_main,
@@ -41,6 +43,7 @@ def calculate_crimes_by_temperature_bins(conn):
     Return per-location, per-day crime counts linked to the actual average
     temperature for that day. This gives many data points for visualization.
     """
+    # SQL: Return crime/temperature pairs per location per day
     query = """
         SELECT
             W.location_id,
@@ -64,6 +67,7 @@ def calculate_crime_type_distribution(conn):
     """
     Distribution of crime categories under each weather type.
     """
+    # SQL: Get distribution of crime categories under each weather type
     query = """
         SELECT
             W.weather_main,
