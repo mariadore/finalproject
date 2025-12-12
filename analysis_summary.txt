@@ -7,7 +7,7 @@ Weather Impact (avg crimes/day):
 
 Temperature Relationship:
   Observations analyzed → 300
-  Max crimes on a single day → 2023-09-19: 24
+  Max crimes on a single day → 2023-09-17: 24
 
 Crime Type Distribution:
   Weather types represented → 7
