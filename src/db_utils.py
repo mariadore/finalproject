@@ -6,11 +6,11 @@ used for crime, weather, and transit analysis. Includes insert helpers, schema
 migrations, and API cursor tracking utilities.
 """
 
-import sqlite3
-import os
 import calendar
 import hashlib
-from typing import Tuple, Optional
+import os
+import sqlite3
+from typing import Optional, Tuple
 
 DB_NAME = 'crime_weather.db'
 
