@@ -184,7 +184,7 @@ def calculate_crimes_near_transit(conn):
     df["mode_count"] = df["mode_list"].apply(lambda lst: len(lst) if lst else 1)
     df["mode_list"] = df["mode_list"].apply(lambda lst: lst if lst else ["unknown"])
 
-    exploded = df.explode("mode_list").rename(columns={"mode_list": "mode"})
+    exploded = df.explode("mode_list").rename(columns={"mode_list": "mode"}).copy()
     exploded["weighted_crimes"] = exploded["crime_count"] / exploded["mode_count"].clip(lower=1)
 
     grouped = (
