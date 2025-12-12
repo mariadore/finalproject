@@ -246,7 +246,7 @@ def insert_transit_stop(conn, stop):
     conn.commit()
 
 
-def get_unlinked_crimes(conn, limit=25):
+def get_unlinked_crimes(conn, limit=25) -> list:
     cur = conn.cursor()
     cur.execute("""
         SELECT id, crime_id, latitude, longitude
@@ -309,7 +309,7 @@ if __name__ == "__main__":
     conn.close()
 
 
-def get_all_locations(conn, limit=None):
+def get_all_locations(conn, limit=None) -> list:
     """
     Return all locations with coordinates, optionally limited.
     """
