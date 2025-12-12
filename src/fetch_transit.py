@@ -35,11 +35,13 @@ def fetch_transit_stops(conn,
         "lat": lat,
         "lon": lon,
         "radius": radius,
-        "stopTypes": stop_types,
-        "modes": ",".join(modes),
         "app_id": TFL_APP_ID,
         "app_key": TFL_APP_KEY
     }
+    if stop_types:
+        params["stopTypes"] = stop_types
+    if modes:
+        params["modes"] = ",".join(modes)
 
     try:
         resp = requests.get(TFL_BASE_URL, params=params, timeout=30)

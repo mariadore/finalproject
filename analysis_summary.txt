@@ -7,7 +7,7 @@ Weather Impact (avg crimes/day):
 
 Temperature Relationship:
   Observations analyzed → 300
-  Max crimes on a single day → 2023-09-17: 24
+  Max crimes on a single day → 2023-09-19: 24
 
 Crime Type Distribution:
   Weather types represented → 7
@@ -20,5 +20,5 @@ Precipitation Effects:
   Highest crime rain level → Dry: 239
 
 Transit Proximity:
-  Modes represented → 1
+  Modes represented → 13
   Highest crime mode → tube: 2971.00

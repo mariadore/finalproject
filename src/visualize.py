@@ -19,9 +19,7 @@ def detect_crime_column(df, preferred=None):
     return None
 
 
-# ---------------------------
-# AVERAGE CRIMES PER WEATHER
-# ---------------------------
+# Average crimes per weather
 def plot_avg_crimes_per_weather(df_weather):
     if df_weather.empty:
         print("weather df empty → skipping")
@@ -79,9 +77,8 @@ def plot_avg_crimes_per_weather(df_weather):
     plt.close()
 
 
-# ---------------------------
-# TEMPERATURE VS CRIME
-# ---------------------------
+# Temerature vs. crime
+
 def plot_crimes_vs_temperature(df_temp):
     if df_temp.empty:
         print("temperature df empty → skipping")
@@ -146,9 +143,8 @@ def plot_crimes_vs_temperature(df_temp):
     plt.close()
 
 
-# ---------------------------
-# CRIME TYPE DISTRIBUTION
-# ---------------------------
+# Crime type distribution
+
 def plot_crime_type_distribution(df_types):
     if df_types.empty:
         print("type df empty → skipping")
@@ -313,10 +309,6 @@ def plot_precipitation_effect(df_rain):
     plt.savefig("precip_vs_crime.png", dpi=300)
     plt.close()
 
-
-# ---------------------------
-# ALL VISUALIZATIONS WRAPPER
-# ---------------------------
 def plot_crimes_vs_transit(df_transit):
     if df_transit is None or df_transit.empty:
         print("transit df empty → skipping")
@@ -377,9 +369,8 @@ def plot_crimes_vs_transit(df_transit):
     plt.close()
 
 
-# ---------------------------
-# ALL VISUALIZATIONS WRAPPER
-# ---------------------------
+# All visualizations 
+
 def visualize_results(df_weather, df_temp, df_types, df_wind=None, df_rain=None, df_transit=None):
     print("Creating visualizations…")
     plot_avg_crimes_per_weather(df_weather)

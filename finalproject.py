@@ -1,6 +1,12 @@
 import calendar
 import os
-from src.db_utils import set_up_database, release_default_location_links, get_transit_stop_count
+from src.db_utils import (
+    set_up_database,
+    release_default_location_links,
+    get_transit_stop_count,
+    get_api_cursor,
+    set_api_cursor
+)
 from src.fetch_crime import fetch_and_store_crimes
 from src.fetch_geocode import geocode_and_attach_locations, assign_default_location
 from src.fetch_weather import fetch_weather_for_all_locations
@@ -92,15 +98,51 @@ def main():
         remaining_transit = MIN_TRANSIT_ROWS - transit_count
         per_run_transit = min(MAX_API_ITEMS_PER_RUN, remaining_transit)
         stop_type_cycle = [
-            ("NaptanMetroStation", (51.515, -0.13)),
-            ("NaptanRailStation", (51.503, -0.112)),
-            ("NaptanBusCoachStation", (51.510, -0.090)),
+            {
+                "stop_types": "NaptanMetroStation",
+                "coords": (51.515, -0.13),
+                "modes": ("tube", "dlr", "overground")
+            },
+            {
+                "stop_types": "NaptanRailStation",
+                "coords": (51.503, -0.112),
+                "modes": ("rail", "overground", "national-rail")
+            },
+            {
+                "stop_types": "NaptanBusCoachStation",
+                "coords": (51.510, -0.090),
+                "modes": ("bus", "coach")
+            },
+            {
+                "stop_types": "NaptanTramStation",
+                "coords": (51.374, -0.10),
+                "modes": ("tram",)
+            },
+            {
+                "stop_types": None,
+                "coords": (51.509, -0.017),
+                "modes": ("dlr",)
+            },
+            {
+                "stop_types": None,
+                "coords": (51.500, 0.003),
+                "modes": ("cable-car",)
+            },
+            {
+                "stop_types": None,
+                "coords": (51.507, -0.02),
+                "modes": ("river-bus", "river-tour")
+            },
         ]
-        cycle_index = min(
-            transit_count // MAX_API_ITEMS_PER_RUN,
-            len(stop_type_cycle) - 1
-        )
-        stop_types, (t_lat, t_lon) = stop_type_cycle[cycle_index]
+        cursor_value = get_api_cursor(conn, "transit_cycle", default="0")
+        try:
+            cycle_index = int(cursor_value)
+        except (TypeError, ValueError):
+            cycle_index = 0
+        config = stop_type_cycle[cycle_index % len(stop_type_cycle)]
+        stop_types = config["stop_types"]
+        t_lat, t_lon = config["coords"]
+        cycle_modes = config.get("modes")
         print(f"Fetching up to {per_run_transit} TfL stops (need {remaining_transit} more) "
               f"using stop types [{stop_types}] near ({t_lat}, {t_lon}).")
         fetch_transit_stops(
@@ -108,8 +150,10 @@ def main():
             lat=t_lat,
             lon=t_lon,
             max_items=per_run_transit,
-            stop_types=stop_types
+            stop_types=stop_types,
+            modes=cycle_modes or ("tube", "dlr", "overground", "bus")
         )
+        set_api_cursor(conn, "transit_cycle", str((cycle_index + 1) % len(stop_type_cycle)))
         print("Re-run the script to accumulate at least 100 transit stops.")
     else:
         print("TransitStops already satisfies the minimum rows.")

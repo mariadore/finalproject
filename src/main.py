@@ -22,24 +22,20 @@ DATES = ["2023-09-01", "2023-09-02", "2023-09-03"]
 
 
 def main():
-    # -------------------------------
-    # 1. DATABASE SETUP
-    # -------------------------------
+    #1. Database setup
     db_path, conn = set_up_database()
 
-    # -------------------------------
-    # 2. FETCH CRIME DATA
-    # -------------------------------
+    # 2. Fetch crime data
     print("Fetching UK crime data...")
     fetch_and_store_crimes(conn, MONTH)
 
-    # 3. GEOCODE LOCATIONS
+    # 3. Geocode locations
 
     print("Skipping geocoding (disabled for reliability).")
     # geocode_and_attach_locations(conn, pos_key)
 
 
-    # 4. FETCH WEATHER DATA
+    # 4. Fetch weather data
  
     # Only run if we have locations (avoids errors)
     has_locations = pd.read_sql_query("SELECT COUNT(*) AS n FROM LocationData;", conn).iloc[0]["n"]
@@ -50,9 +46,8 @@ def main():
     else:
         print("No locations available — skipping weather.")
 
-    # -------------------------------
-    # 5. RUN CALCULATIONS
-    # -------------------------------
+    # 5. Run analysis
+
     print("Running analysis queries...")
 
     df_weather_types = calculate_crimes_by_weather(conn)
@@ -63,9 +58,8 @@ def main():
 
     print("Analysis DataFrames created successfully.")
 
-    # -------------------------------
-    # 6. VISUALIZE
-    # -------------------------------
+    # 6. Visualize
+    
     print("Generating visualizations...")
 
     visualize_results(
