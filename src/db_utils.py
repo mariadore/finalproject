@@ -336,8 +336,8 @@ def get_transit_stop_count(conn):
     """
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM TransitStops;")
-    cur.close()
     row = cur.fetchone()
+    cur.close()
     return row[0] if row else 0
 
 
