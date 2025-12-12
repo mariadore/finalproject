@@ -131,6 +131,11 @@ EXPECTED_TRANSIT_MODES = sorted({
 
 
 def _split_modes(modes_str, stop_type):
+    """
+    Given a TfL 'modes' string and a fallback stop_type, return a cleaned list
+    of individual modes. If the modes string is empty or null, fall back to the
+    STOP_TYPE_MODE_MAP mapping. Ensures consistent mode parsing.
+    """
     if not modes_str:
         fallback = STOP_TYPE_MODE_MAP.get(stop_type)
         return [fallback] if fallback else []
