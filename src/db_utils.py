@@ -27,6 +27,7 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
 
     # CrimeData table
     cur.execute("""
+    # Core crime table storing all incidents from UK Police API
         CREATE TABLE IF NOT EXISTS CrimeData (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             crime_id TEXT UNIQUE,
@@ -46,6 +47,7 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
 
     # LocationData table
     cur.execute("""
+    # Normalized location table for each geocoded area
         CREATE TABLE IF NOT EXISTS LocationData (
             location_id INTEGER PRIMARY KEY AUTOINCREMENT,
             city TEXT,
