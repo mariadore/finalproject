@@ -164,7 +164,7 @@ def insert_crime(conn, crime: dict) -> None:
             latitude, longitude, street_id, street_name,
             outcome_category, outcome_date, crime_date, location_id
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         crime.get("crime_id"),
         crime.get("persistent_id"),
@@ -336,8 +336,8 @@ def get_transit_stop_count(conn):
     """
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM TransitStops;")
-    cur.close()
-    row = cur.fetchone()
+    row = cur.fetchone()   # fetch BEFORE closing
+    cur.close()            # now safe to close
     return row[0] if row else 0
 
 
