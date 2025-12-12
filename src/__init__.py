@@ -16,5 +16,5 @@ __all__ = [
     "fetch_and_store_crimes",
     "fetch_weather_for_all_locations",
     "geocode_and_attach_locations",
-    "set_up_database"
+    "set_up_database",
 ]
