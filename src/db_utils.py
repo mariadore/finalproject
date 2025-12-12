@@ -330,6 +330,9 @@ def get_all_locations(conn, limit=None) -> list:
 
 
 def get_transit_stop_count(conn):
+    """
+    Return the total number of transit stops currently stored in TransitStops.
+    """
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM TransitStops;")
     row = cur.fetchone()
