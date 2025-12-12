@@ -26,8 +26,8 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
     cur = conn.cursor()
 
     # CrimeData table
-    cur.execute("""
     # Core crime table storing all incidents from UK Police API
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS CrimeData (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             crime_id TEXT UNIQUE,
@@ -46,8 +46,8 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
     """)
 
     # LocationData table
-    cur.execute("""
     # Normalized location table for each geocoded area
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS LocationData (
             location_id INTEGER PRIMARY KEY AUTOINCREMENT,
             city TEXT,
@@ -202,7 +202,6 @@ def derive_crime_date(month_str, seed_value):
 
 
 def insert_weather(conn, weather: dict) -> None:
-
     """
     Insert weather row into WeatherData. Skips duplicates based on UNIQUE(location_id, date).
     """
