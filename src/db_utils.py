@@ -1,8 +1,16 @@
-import sqlite3
-import os
+"""
+db_utils.py
+
+Utility functions for creating, migrating, and maintaining the SQLite database
+used for crime, weather, and transit analysis. Includes insert helpers, schema
+migrations, and API cursor tracking utilities.
+"""
+
 import calendar
 import hashlib
-from typing import Tuple, Optional
+import os
+import sqlite3
+from typing import Optional, Tuple
 
 DB_NAME = 'crime_weather.db'
 
@@ -18,6 +26,7 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
     cur = conn.cursor()
 
     # CrimeData table
+    # Core crime table storing all incidents from UK Police API
     cur.execute("""
         CREATE TABLE IF NOT EXISTS CrimeData (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,6 +46,7 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
     """)
 
     # LocationData table
+    # Normalized location table for each geocoded area
     cur.execute("""
         CREATE TABLE IF NOT EXISTS LocationData (
             location_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -116,7 +126,7 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
 # INSERT / UPDATE HELPERS
 # -----------------------
 
-def insert_location(conn, city, county, region, lat, lon, label):
+def insert_location(conn, city, county, region, lat, lon, label) -> int:
     """
     Insert or return existing LocationData entry.
     Returns location_id.
@@ -133,7 +143,7 @@ def insert_location(conn, city, county, region, lat, lon, label):
     return row[0] if row else None
 
 
-def insert_crime(conn, crime):
+def insert_crime(conn, crime: dict) -> None:
     """
     Insert a normalized UK Police API crime dict into CrimeData.
     """
@@ -191,7 +201,7 @@ def derive_crime_date(month_str, seed_value):
     return f"{year:04d}-{month:02d}-{day:02d}"
 
 
-def insert_weather(conn, weather):
+def insert_weather(conn, weather: dict) -> None:
     """
     Insert weather row into WeatherData. Skips duplicates based on UNIQUE(location_id, date).
     """
@@ -237,7 +247,7 @@ def insert_transit_stop(conn, stop):
     conn.commit()
 
 
-def get_unlinked_crimes(conn, limit=25):
+def get_unlinked_crimes(conn, limit=25) -> list:
     cur = conn.cursor()
     cur.execute("""
         SELECT id, crime_id, latitude, longitude
@@ -300,7 +310,7 @@ if __name__ == "__main__":
     conn.close()
 
 
-def get_all_locations(conn, limit=None):
+def get_all_locations(conn, limit=None) -> list:
     """
     Return all locations with coordinates, optionally limited.
     """
@@ -321,8 +331,12 @@ def get_all_locations(conn, limit=None):
 
 
 def get_transit_stop_count(conn):
+    """
+    Return the total number of transit stops currently stored in TransitStops.
+    """
     cur = conn.cursor()
     cur.execute("SELECT COUNT(*) FROM TransitStops;")
+    cur.close()
     row = cur.fetchone()
     return row[0] if row else 0
 

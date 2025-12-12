@@ -1,12 +1,23 @@
+"""
+analysis.py
+
+This module contains all analysis functions used to derive insights from the
+WeatherData, CrimeData, and TransitStops tables. Each function returns a
+Pandas DataFrame that can be used directly for visualization or statistical
+interpretation.
+"""
+
 import pandas as pd
 
 
-
+# Crime and weather relationship analysis
 def calculate_crimes_by_weather(conn):
     """
     Join WeatherData → CrimeData to ensure every weather type
     appears even if it has zero linked crimes.
     """
+    # SQL: Aggregate crimes grouped by weather category with per-day normalization
+
     query = """
         SELECT 
             W.weather_main,
@@ -26,12 +37,12 @@ def calculate_crimes_by_weather(conn):
     return df
 
 
-
 def calculate_crimes_by_temperature_bins(conn):
     """
     Return per-location, per-day crime counts linked to the actual average
     temperature for that day. This gives many data points for visualization.
     """
+    # SQL: Return crime/temperature pairs per location per day
     query = """
         SELECT
             W.location_id,
@@ -49,12 +60,11 @@ def calculate_crimes_by_temperature_bins(conn):
     df = pd.read_sql_query(query, conn)
     return df
 
-
-
 def calculate_crime_type_distribution(conn):
     """
     Distribution of crime categories under each weather type.
     """
+    # SQL: Get distribution of crime categories under each weather type
     query = """
         SELECT
             W.weather_main,
@@ -114,14 +124,25 @@ STOP_TYPE_MODE_MAP = {
     "NaptanFerryPort": "river",
     "NaptanAirAccessArea": "air"
 }
+"""
+EXPECTED_TRANSIT_MODES defines all transit categories that should appear in
+charts even when the dataset contains zero stops or zero crimes for them.
+This ensures consistent visualization across incomplete data scenarios.
+"""
+
 EXPECTED_TRANSIT_MODES = sorted({
     "tube", "rail", "bus", "tram", "river", "air",
     "overground", "dlr", "coach", "river-bus", "river-tour",
     "cable-car", "national-rail"
 } | set(STOP_TYPE_MODE_MAP.values()))
-
+# Transit stop crime analysis (TfL multi-mode support)
 
 def _split_modes(modes_str, stop_type):
+    """
+    Given a TfL 'modes' string and a fallback stop_type, return a cleaned list
+    of individual modes. If the modes string is empty or null, fall back to the
+    STOP_TYPE_MODE_MAP mapping. Ensures consistent mode parsing.
+    """
     if not modes_str:
         fallback = STOP_TYPE_MODE_MAP.get(stop_type)
         return [fallback] if fallback else []
@@ -163,7 +184,7 @@ def calculate_crimes_near_transit(conn):
     df["mode_count"] = df["mode_list"].apply(lambda lst: len(lst) if lst else 1)
     df["mode_list"] = df["mode_list"].apply(lambda lst: lst if lst else ["unknown"])
 
-    exploded = df.explode("mode_list").rename(columns={"mode_list": "mode"})
+    exploded = df.explode("mode_list").rename(columns={"mode_list": "mode"}).copy()
     exploded["weighted_crimes"] = exploded["crime_count"] / exploded["mode_count"].clip(lower=1)
 
     grouped = (
