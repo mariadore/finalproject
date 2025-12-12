@@ -127,6 +127,12 @@ STOP_TYPE_MODE_MAP = {
     "NaptanFerryPort": "river",
     "NaptanAirAccessArea": "air"
 }
+"""
+EXPECTED_TRANSIT_MODES defines all transit categories that should appear in
+charts even when the dataset contains zero stops or zero crimes for them.
+This ensures consistent visualization across incomplete data scenarios.
+"""
+
 EXPECTED_TRANSIT_MODES = sorted({
     "tube", "rail", "bus", "tram", "river", "air",
     "overground", "dlr", "coach", "river-bus", "river-tour",
