@@ -1,3 +1,12 @@
+"""
+analysis.py
+
+This module contains all analysis functions used to derive insights from the
+WeatherData, CrimeData, and TransitStops tables. Each function returns a
+Pandas DataFrame that can be used directly for visualization or statistical
+interpretation.
+"""
+
 import pandas as pd
 
 
