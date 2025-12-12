@@ -37,7 +37,6 @@ def calculate_crimes_by_weather(conn):
     return df
 
 
-
 def calculate_crimes_by_temperature_bins(conn):
     """
     Return per-location, per-day crime counts linked to the actual average
@@ -60,8 +59,6 @@ def calculate_crimes_by_temperature_bins(conn):
 
     df = pd.read_sql_query(query, conn)
     return df
-
-
 
 def calculate_crime_type_distribution(conn):
     """
