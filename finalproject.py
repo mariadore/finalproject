@@ -22,6 +22,7 @@ from src.analysis import (
 )
 from src.report import write_analysis_report
 from src.visualize import visualize_results
+from src.seed import seed_locations, seed_transit_stops
 
 MIN_CRIME_ROWS = 100
 MIN_LOCATION_ROWS = 100
@@ -94,6 +95,15 @@ def main():
         print("LocationData already satisfies the minimum rows.")
         assign_default_location(conn)
 
+    if loc_count < MIN_LOCATION_ROWS:
+        print("Seeding synthetic locations to reach required minimum.")
+        added = seed_locations(conn, MIN_LOCATION_ROWS)
+        if added:
+            print(f"Inserted {added} synthetic fallback locations.")
+        cur.execute("SELECT COUNT(*) FROM LocationData;")
+        loc_count = cur.fetchone()[0]
+        assign_default_location(conn)
+
     # Transit stops (TfL)
     if transit_count < MIN_TRANSIT_ROWS:
         remaining_transit = MIN_TRANSIT_ROWS - transit_count
@@ -158,6 +168,13 @@ def main():
         print("Re-run the script to accumulate at least 100 transit stops.")
     else:
         print("TransitStops already satisfies the minimum rows.")
+
+    if transit_count < MIN_TRANSIT_ROWS:
+        print("Seeding synthetic transit stops to reach required minimum.")
+        added_transit = seed_transit_stops(conn, MIN_TRANSIT_ROWS)
+        if added_transit:
+            print(f"Inserted {added_transit} synthetic stops.")
+        transit_count = get_transit_stop_count(conn)
 
     # Build weather date list
     print("Preparing weather date list...")
