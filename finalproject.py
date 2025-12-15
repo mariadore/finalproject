@@ -75,7 +75,7 @@ def export_analysis_csvs(df_map, output_dir="data/exports"):
 def _read_counts(cur):
     cur.execute("SELECT COUNT(*) FROM CrimeData;")
     crime = cur.fetchone()[0]
-    cur.execute("SELECT COUNT(*) FROM LocationData WHERE label != 'DEFAULT_LONDON';")
+    cur.execute("SELECT COUNT(*) FROM LocationData;")
     loc = cur.fetchone()[0]
     cur.execute("SELECT COUNT(*) FROM WeatherData;")
     weather = cur.fetchone()[0]
@@ -134,7 +134,7 @@ def main(month="2023-09", allow_seed=False, show_plots=False):
         crime_count = cur.fetchone()[0]
         inserted = max(crime_count - before_crime, 0)
         per_run_notes["CrimeData"] = f"[fetched {inserted}/{fetch_limit}]"
-        print("Re-run the script as needed to accumulate at least 100 crimes.")
+        print(f"Re-run the script as needed to accumulate at least {MIN_CRIME_ROWS} crimes.")
     else:
         print(f"CrimeData already satisfies minimum rows ({crime_count} rows).")
 
@@ -151,12 +151,14 @@ def main(month="2023-09", allow_seed=False, show_plots=False):
         cur.execute("SELECT COUNT(*) FROM LocationData WHERE label != 'DEFAULT_LONDON';")
         loc_count = cur.fetchone()[0]
         per_run_notes["LocationData"] = f"[geocoded {max(loc_count - before_loc, 0)}/{per_run}]"
-        if loc_count < MIN_LOCATION_ROWS:
+        if loc_count >= MIN_LOCATION_ROWS:
+            print("Location minimum met. Assigning default location to remaining crimes.")
+            assign_default_location(conn)
+        else:
             print("Re-run the script to continue building LocationData via TomTom.")
     else:
         print("LocationData already satisfies the minimum rows.")
-
-    assign_default_location(conn)
+        assign_default_location(conn)
 
     if loc_count < MIN_LOCATION_ROWS and allow_seed:
         print("Seeding synthetic locations to reach required minimum (allow-seed enabled).")
@@ -176,39 +178,52 @@ def main(month="2023-09", allow_seed=False, show_plots=False):
         per_run_transit = min(MAX_API_ITEMS_PER_RUN, remaining_transit)
         stop_type_cycle = [
             {
-                "stop_types": "NaptanMetroStation",
-                "coords": (51.515, -0.13),
-                "modes": ("tube", "dlr", "overground")
+                "stop_types": None,
+                "coords": (51.509, -0.118),
+                "radius": 2500,
+                "modes": ("tube", "dlr", "overground", "bus")
+            },
+            {
+                "stop_types": None,
+                "coords": (51.520, -0.005),
+                "radius": 2500,
+                "modes": ("tube", "dlr", "overground", "bus", "tram")
+            },
+            {
+                "stop_types": None,
+                "coords": (51.470, -0.100),
+                "radius": 2500,
+                "modes": ("tube", "dlr", "overground", "bus")
+            },
+            {
+                "stop_types": None,
+                "coords": (51.565, -0.150),
+                "radius": 2500,
+                "modes": ("tube", "dlr", "overground", "bus")
             },
             {
                 "stop_types": "NaptanRailStation",
                 "coords": (51.503, -0.112),
+                "radius": 2000,
                 "modes": ("overground",)
+            },
+            {
+                "stop_types": "NaptanMetroStation",
+                "coords": (51.515, -0.13),
+                "radius": 2000,
+                "modes": ("tube", "dlr", "overground")
             },
             {
                 "stop_types": "NaptanBusCoachStation",
                 "coords": (51.510, -0.090),
+                "radius": 2000,
                 "modes": ("bus", "coach")
             },
             {
-                "stop_types": "NaptanTramStation",
-                "coords": (51.374, -0.10),
-                "modes": ("tram",)
-            },
-            {
                 "stop_types": None,
-                "coords": (51.509, -0.017),
-                "modes": ("dlr",)
-            },
-            {
-                "stop_types": None,
-                "coords": (51.500, 0.003),
-                "modes": ("cable-car",)
-            },
-            {
-                "stop_types": None,
-                "coords": (51.507, -0.02),
-                "modes": ("river-bus", "river-tour")
+                "coords": (51.470, -0.350),
+                "radius": 2500,
+                "modes": ("tube", "dlr", "overground", "bus")
             },
         ]
         cursor_value = get_api_cursor(conn, "transit_cycle", default="0")
@@ -220,19 +235,21 @@ def main(month="2023-09", allow_seed=False, show_plots=False):
         stop_types = config["stop_types"]
         t_lat, t_lon = config["coords"]
         cycle_modes = config.get("modes")
+        radius = config.get("radius", 2000)
         print(f"Fetching up to {per_run_transit} TfL stops (need {remaining_transit} more) "
-              f"using stop types [{stop_types}] near ({t_lat}, {t_lon}).")
+              f"using stop types [{stop_types}] near ({t_lat}, {t_lon}) radius {radius}m.")
         before_transit = transit_count
         fetch_transit_stops(
             conn,
             lat=t_lat,
             lon=t_lon,
+            radius=radius,
             max_items=per_run_transit,
             stop_types=stop_types,
             modes=cycle_modes or ("tube", "dlr", "overground", "bus")
         )
         set_api_cursor(conn, "transit_cycle", str((cycle_index + 1) % len(stop_type_cycle)))
-        print("Re-run the script to accumulate at least 100 transit stops.")
+        print(f"Re-run the script to accumulate at least {MIN_TRANSIT_ROWS} transit stops.")
         transit_count = get_transit_stop_count(conn)
         per_run_notes["TransitStops"] = f"[inserted {max(transit_count - before_transit, 0)}/{per_run_transit}]"
     else:

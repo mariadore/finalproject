@@ -1,0 +1,14 @@
+mode,crime_count,stop_count,avg_crimes_per_stop
+tube,839.0,36,23.305555555555557
+dlr,188.0,11,17.09090909090909
+cable-car,174.0,10,17.4
+river-bus,158.0,10,15.8
+bus,153.0,12,12.75
+rail,149.0,10,14.9
+tram,146.0,10,14.6
+overground,0.0,1,0.0
+national-rail,0.0,1,0.0
+air,0.0,0,0.0
+coach,0.0,0,0.0
+river,0.0,0,0.0
+river-tour,0.0,0,0.0
