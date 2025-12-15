@@ -4,6 +4,12 @@ import pandas as pd
 import seaborn as sns
 
 plt.style.use("seaborn-v0_8-whitegrid")
+plt.rcParams.update({
+    "font.size": 12,
+    "axes.titleweight": "bold",
+    "axes.labelsize": 13,
+    "axes.titlesize": 18
+})
 
 
 def detect_crime_column(df, preferred=None):
