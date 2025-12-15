@@ -253,9 +253,10 @@ def plot_transit_mode_crimes(df_transit):
         print("transit mode df empty → skipping")
         return
 
-    fig, ax1 = plt.subplots(figsize=(12, 6))
+    fig, ax1 = plt.subplots(figsize=(13.5, 6.5))
     colors = plt.cm.Purples(np.linspace(0.35, 0.9, len(df)))
-    bars = ax1.bar(df["mode"], df["crime_count"],
+    x = np.arange(len(df))
+    bars = ax1.bar(x, df["crime_count"],
                    color=colors,
                    edgecolor="black",
                    linewidth=0.6,
@@ -264,7 +265,7 @@ def plot_transit_mode_crimes(df_transit):
     ax1.tick_params(axis="y", colors="#4a148c")
 
     ax2 = ax1.twinx()
-    ax2.plot(df["mode"], df["avg_crimes_per_stop"],
+    ax2.plot(x, df["avg_crimes_per_stop"],
              color="#ff6f00",
              marker="o",
              linewidth=2,
@@ -274,16 +275,22 @@ def plot_transit_mode_crimes(df_transit):
 
     for idx, bar in enumerate(bars):
         stop_count = int(df.iloc[idx]["stop_count"])
-        ax1.text(bar.get_x() + bar.get_width()/2,
-                 bar.get_height() + max(bar.get_height() * 0.02, 0.5),
-                 f"{int(bar.get_height())} crimes\n{stop_count} stops",
+        crime_val = int(bar.get_height())
+        avg_val = df.iloc[idx]["avg_crimes_per_stop"]
+        ax2.text(idx,
+                 avg_val + max(avg_val * 0.04, 0.05),
+                 f"{crime_val} crimes\n{stop_count} stops",
                  ha="center",
-                 fontsize=10)
+                 va="bottom",
+                 fontsize=9,
+                 color="#333333")
 
     handles1, labels1 = ax1.get_legend_handles_labels()
     handles2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(handles1 + handles2, labels1 + labels2, loc="upper right")
     ax1.set_xlabel("Transit Modes", fontsize=14)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(df["mode"], rotation=20)
     ax1.set_title("Crimes Near TfL Transit Modes", fontsize=18, weight="bold")
     ax1.grid(axis="y", linestyle=":", alpha=0.4)
     plt.tight_layout()
