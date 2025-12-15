@@ -1,3 +1,4 @@
+import argparse
 import calendar
 import os
 from src.db_utils import (
@@ -44,7 +45,16 @@ def get_unique_crime_months(conn):
     return [row[0] for row in cur.fetchall()]
 
 
-def main():
+def parse_args():
+    parser = argparse.ArgumentParser(description="SI 201 final project pipeline runner.")
+    parser.add_argument("--month", default="2023-09",
+                        help="Crime month (YYYY-MM) to download per run.")
+    parser.add_argument("--allow-seed", action="store_true",
+                        help="Allow synthetic data seeding when APIs cannot satisfy requirements.")
+    return parser.parse_args()
+
+
+def main(month="2023-09", allow_seed=False):
     print("Setting up database...")
     db_path, conn = set_up_database()
 
@@ -62,15 +72,13 @@ def main():
     transit_count = get_transit_stop_count(conn)
 
     # Fetch crime data only if needed
-    LAT = 51.515
-    LON = -0.13
-    MONTH = "2023-09"
-
     if crime_count < MIN_CRIME_ROWS:
         remaining = MIN_CRIME_ROWS - crime_count
         fetch_limit = min(MAX_API_ITEMS_PER_RUN, remaining)
         print(f"Fetching up to {fetch_limit} crimes (need {remaining} more to hit {MIN_CRIME_ROWS}).")
-        fetch_and_store_crimes(conn, MONTH, max_items=fetch_limit)
+        fetch_and_store_crimes(conn, month, max_items=fetch_limit)
+        cur.execute("SELECT COUNT(*) FROM CrimeData;")
+        crime_count = cur.fetchone()[0]
         print("Re-run the script as needed to accumulate at least 100 crimes.")
     else:
         print(f"CrimeData already satisfies minimum rows ({crime_count} rows).")
@@ -86,23 +94,24 @@ def main():
         geocode_and_attach_locations(conn, max_items=per_run)
         cur.execute("SELECT COUNT(*) FROM LocationData WHERE label != 'DEFAULT_LONDON';")
         loc_count = cur.fetchone()[0]
-        if loc_count >= MIN_LOCATION_ROWS:
-            print("Location minimum met. Assigning default location to remaining crimes.")
-            assign_default_location(conn)
-        else:
+        if loc_count < MIN_LOCATION_ROWS:
             print("Re-run the script to continue building LocationData via TomTom.")
     else:
         print("LocationData already satisfies the minimum rows.")
-        assign_default_location(conn)
 
-    if loc_count < MIN_LOCATION_ROWS:
-        print("Seeding synthetic locations to reach required minimum.")
+    assign_default_location(conn)
+
+    if loc_count < MIN_LOCATION_ROWS and allow_seed:
+        print("Seeding synthetic locations to reach required minimum (allow-seed enabled).")
         added = seed_locations(conn, MIN_LOCATION_ROWS)
         if added:
             print(f"Inserted {added} synthetic fallback locations.")
-        cur.execute("SELECT COUNT(*) FROM LocationData;")
+        cur.execute("SELECT COUNT(*) FROM LocationData WHERE label != 'DEFAULT_LONDON';")
         loc_count = cur.fetchone()[0]
         assign_default_location(conn)
+    else:
+        if loc_count < MIN_LOCATION_ROWS:
+            print("LocationData still below requirement. Re-run the script to gather more TomTom results.")
 
     # Transit stops (TfL)
     if transit_count < MIN_TRANSIT_ROWS:
@@ -166,15 +175,18 @@ def main():
         )
         set_api_cursor(conn, "transit_cycle", str((cycle_index + 1) % len(stop_type_cycle)))
         print("Re-run the script to accumulate at least 100 transit stops.")
+        transit_count = get_transit_stop_count(conn)
     else:
         print("TransitStops already satisfies the minimum rows.")
 
-    if transit_count < MIN_TRANSIT_ROWS:
-        print("Seeding synthetic transit stops to reach required minimum.")
+    if transit_count < MIN_TRANSIT_ROWS and allow_seed:
+        print("Seeding synthetic transit stops to reach required minimum (allow-seed enabled).")
         added_transit = seed_transit_stops(conn, MIN_TRANSIT_ROWS)
         if added_transit:
             print(f"Inserted {added_transit} synthetic stops.")
         transit_count = get_transit_stop_count(conn)
+    elif transit_count < MIN_TRANSIT_ROWS:
+        print("TransitStops still below requirement. Re-run the script after data collection limits reset.")
 
     # Build weather date list
     print("Preparing weather date list...")
@@ -195,6 +207,8 @@ def main():
         per_run = MAX_API_ITEMS_PER_RUN
         print("WeatherData already meets minimum rows; refreshing limited chunk for recency.")
     fetch_weather_for_all_locations(conn, dates=DATES, max_new_records=per_run)
+    cur.execute("SELECT COUNT(*) FROM WeatherData;")
+    weather_count = cur.fetchone()[0]
     if weather_count < MIN_WEATHER_ROWS:
         print("Re-run the script to continue gathering weather records without exceeding per-run limits.")
 
@@ -219,4 +233,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(month=args.month, allow_seed=args.allow_seed)
