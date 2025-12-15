@@ -14,12 +14,15 @@ plt.rcParams.update({
 FIG_CAPTION = "Sources: UK Police, TomTom, Open-Meteo, TfL StopPoint."
 
 
-def _finalize_figure(fig, filename, caption=FIG_CAPTION):
+def _finalize_figure(fig, filename, caption=FIG_CAPTION, show=False):
     """Apply shared padding + caption, then persist figure."""
     fig.tight_layout(rect=[0, 0.05, 1, 1])
     fig.text(0.01, 0.01, caption, fontsize=10, color="dimgray")
     fig.savefig(filename, dpi=300)
-    plt.close(fig)
+    if show:
+        fig.show()
+    else:
+        plt.close(fig)
 
 
 def detect_crime_column(df, preferred=None):
@@ -36,7 +39,7 @@ def detect_crime_column(df, preferred=None):
 
 
 # Average crimes per weather
-def plot_avg_crimes_per_weather(df_weather):
+def plot_avg_crimes_per_weather(df_weather, show=False):
     if df_weather.empty:
         print("weather df empty → skipping")
         return
@@ -101,12 +104,12 @@ def plot_avg_crimes_per_weather(df_weather):
         edgecolor="dimgray"
     )
 
-    _finalize_figure(fig, "avg_crimes_weather.png")
+    _finalize_figure(fig, "avg_crimes_weather.png", show=show)
 
 
 # Temerature vs. crime
 
-def plot_crimes_vs_temperature(df_temp):
+def plot_crimes_vs_temperature(df_temp, show=False):
     if df_temp.empty:
         print("temperature df empty → skipping")
         return
@@ -166,12 +169,12 @@ def plot_crimes_vs_temperature(df_temp):
 
     ax.legend(loc="best", frameon=True, framealpha=0.9, edgecolor="dimgray")
     ax.grid(axis="both", linestyle=":", alpha=0.4)
-    _finalize_figure(fig, "temp_vs_crime.png")
+    _finalize_figure(fig, "temp_vs_crime.png", show=show)
 
 
 # Crime type distribution
 
-def plot_crimes_vs_wind(df_wind):
+def plot_crimes_vs_wind(df_wind, show=False):
     if df_wind is None or df_wind.empty:
         print("wind df empty → skipping")
         return
@@ -228,10 +231,10 @@ def plot_crimes_vs_wind(df_wind):
     )
 
     ax1.set_title("Crime Rate vs Wind Speed (+ cumulative share)", fontsize=18, weight="bold")
-    _finalize_figure(fig, "wind_vs_crime.png")
+    _finalize_figure(fig, "wind_vs_crime.png", show=show)
 
 
-def plot_precipitation_effect(df_rain):
+def plot_precipitation_effect(df_rain, show=False):
     if df_rain is None or df_rain.empty:
         print("precip df empty → skipping")
         return
@@ -263,9 +266,9 @@ def plot_precipitation_effect(df_rain):
     ax.set_ylabel("Rain Level", fontsize=14)
     ax.grid(axis="x", linestyle=":", alpha=0.4)
 
-    _finalize_figure(fig, "precip_vs_crime.png")
+    _finalize_figure(fig, "precip_vs_crime.png", show=show)
 
-def plot_transit_mode_crimes(df_transit):
+def plot_transit_mode_crimes(df_transit, show=False):
     if df_transit is None or df_transit.empty:
         print("transit mode df empty → skipping")
         return
@@ -323,9 +326,9 @@ def plot_transit_mode_crimes(df_transit):
     ax1.set_xticklabels(df["mode"], rotation=20)
     ax1.set_title("Crimes Near TfL Transit Modes", fontsize=18, weight="bold")
     ax1.grid(axis="y", linestyle=":", alpha=0.4)
-    _finalize_figure(fig, "transit_modes.png")
+    _finalize_figure(fig, "transit_modes.png", show=show)
 
-def plot_transit_hotspots(df_hotspots):
+def plot_transit_hotspots(df_hotspots, show=False):
     if df_hotspots is None or df_hotspots.empty:
         print("transit hotspots empty → skipping")
         return
@@ -350,17 +353,18 @@ def plot_transit_hotspots(df_hotspots):
     ax.set_ylabel("TfL Stop", fontsize=14)
     ax.set_title("Top Transit Stops by Nearby Crimes", fontsize=18, weight="bold")
     ax.grid(axis="x", linestyle=":", alpha=0.4)
-    _finalize_figure(fig, "transit_hotspots.png")
+    _finalize_figure(fig, "transit_hotspots.png", show=show)
 
 
 # All visualizations 
 
-def visualize_results(df_weather, df_temp, df_types, df_wind=None, df_rain=None, df_transit=None, df_transit_hotspots=None):
+def visualize_results(df_weather, df_temp, df_types, df_wind=None, df_rain=None,
+                      df_transit=None, df_transit_hotspots=None, show_plots=False):
     print("Creating visualizations…")
-    plot_avg_crimes_per_weather(df_weather)
-    plot_crimes_vs_temperature(df_temp)
-    plot_crimes_vs_wind(df_wind)
-    plot_precipitation_effect(df_rain)
-    plot_transit_mode_crimes(df_transit)
-    plot_transit_hotspots(df_transit_hotspots)
+    plot_avg_crimes_per_weather(df_weather, show=show_plots)
+    plot_crimes_vs_temperature(df_temp, show=show_plots)
+    plot_crimes_vs_wind(df_wind, show=show_plots)
+    plot_precipitation_effect(df_rain, show=show_plots)
+    plot_transit_mode_crimes(df_transit, show=show_plots)
+    plot_transit_hotspots(df_transit_hotspots, show=show_plots)
     print("Visualizations saved!")
