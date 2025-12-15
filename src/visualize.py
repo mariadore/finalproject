@@ -76,7 +76,14 @@ def plot_avg_crimes_per_weather(df_weather):
         h2, l2 = ax2.get_legend_handles_labels()
         handles += h2
         labels += l2
-    ax1.legend(handles, labels, loc="upper right", frameon=True)
+    ax1.legend(
+        handles,
+        labels,
+        loc="upper right",
+        frameon=True,
+        framealpha=0.9,
+        edgecolor="dimgray"
+    )
 
     plt.tight_layout()
     plt.savefig("avg_crimes_weather.png", dpi=300)
@@ -142,7 +149,7 @@ def plot_crimes_vs_temperature(df_temp):
 
     plt.ylabel("Total Crimes", fontsize=14)
 
-    plt.legend(loc="best")
+    plt.legend(loc="best", frameon=True, framealpha=0.9, edgecolor="dimgray")
     plt.grid(axis="both", linestyle=":", alpha=0.4)
     plt.tight_layout()
     plt.savefig("temp_vs_crime.png", dpi=300)
@@ -198,7 +205,14 @@ def plot_crimes_vs_wind(df_wind):
 
     handles1, labels1 = ax1.get_legend_handles_labels()
     handles2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(handles1 + handles2, labels1 + labels2, loc="upper left")
+    ax1.legend(
+        handles1 + handles2,
+        labels1 + labels2,
+        loc="upper left",
+        frameon=True,
+        framealpha=0.9,
+        edgecolor="dimgray"
+    )
 
     plt.title("Crime Rate vs Wind Speed (+ cumulative share)", fontsize=18, weight="bold")
     plt.tight_layout()
@@ -287,7 +301,14 @@ def plot_transit_mode_crimes(df_transit):
 
     handles1, labels1 = ax1.get_legend_handles_labels()
     handles2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(handles1 + handles2, labels1 + labels2, loc="upper right")
+    ax1.legend(
+        handles1 + handles2,
+        labels1 + labels2,
+        loc="upper right",
+        frameon=True,
+        framealpha=0.9,
+        edgecolor="dimgray"
+    )
     ax1.set_xlabel("Transit Modes", fontsize=14)
     ax1.set_xticks(x)
     ax1.set_xticklabels(df["mode"], rotation=20)
