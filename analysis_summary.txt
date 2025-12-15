@@ -2,23 +2,23 @@ SI 201 Crime & Weather Analysis Summary
 By Lucia, Maria, and Brielle
 
 Weather Impact (avg crimes/day):
-  Top weather condition → Drizzle: 18.67
+  Top weather condition → Overcast: 0.20
   Total weather types analyzed → 7
 
 Temperature Relationship:
-  Observations analyzed → 300
-  Max crimes on a single day → 2023-09-17: 24
+  Observations analyzed → 25
+  Max crimes on a single day → 2023-09-06: 1
 
 Crime Type Distribution:
-  Weather types represented → 7
-  Dominant crime category → anti-social-behaviour: 187
+  Weather types represented → 1
+  Dominant crime category → burglary: 1
 
 Wind Effects:
-  Highest crime wind bin → 45.6: 25.00
+  Highest crime wind bin → 10.5: 1.00
 
 Precipitation Effects:
-  Highest crime rain level → Dry: 239
+  Highest crime rain level → Dry: 2
 
 Transit Proximity:
   Modes represented → 13
-  Highest crime mode → tube: 2971.00
+  Highest crime mode → tube: 22.00
