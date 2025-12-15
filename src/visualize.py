@@ -11,6 +11,16 @@ plt.rcParams.update({
     "axes.titlesize": 18
 })
 
+FIG_CAPTION = "Sources: UK Police, TomTom, Open-Meteo, TfL StopPoint."
+
+
+def _finalize_figure(fig, filename, caption=FIG_CAPTION):
+    """Apply shared padding + caption, then persist figure."""
+    fig.tight_layout(rect=[0, 0.05, 1, 1])
+    fig.text(0.01, 0.01, caption, fontsize=10, color="dimgray")
+    fig.savefig(filename, dpi=300)
+    plt.close(fig)
+
 
 def detect_crime_column(df, preferred=None):
     cols = [
@@ -91,9 +101,7 @@ def plot_avg_crimes_per_weather(df_weather):
         edgecolor="dimgray"
     )
 
-    plt.tight_layout()
-    plt.savefig("avg_crimes_weather.png", dpi=300)
-    plt.close()
+    _finalize_figure(fig, "avg_crimes_weather.png")
 
 
 # Temerature vs. crime
@@ -115,51 +123,50 @@ def plot_crimes_vs_temperature(df_temp):
         y = df[col].values
 
         sizes = np.interp(y, (y.min(), y.max()), (60, 400)) if y.max() != y.min() else np.full_like(y, 120)
-        plt.figure(figsize=(13, 6))
-        scatter = plt.scatter(x, y, s=sizes, c=y, cmap="coolwarm",
-                              edgecolors="black", linewidth=0.4, alpha=0.75,
-                              label="Location-Day Observations")
-        cbar = plt.colorbar(scatter)
-        cbar.set_label("Crime Count", rotation=270, labelpad=15)
+        fig, ax = plt.subplots(figsize=(13, 6))
+        scatter = ax.scatter(x, y, s=sizes, c=y, cmap="coolwarm",
+                             edgecolors="black", linewidth=0.4, alpha=0.75,
+                             label="Location-Day Observations")
+        cbar = fig.colorbar(scatter, ax=ax)
+        cbar.set_label("Crimes per location-day", rotation=270, labelpad=15)
 
         if len(df) > 2:
             xs = np.linspace(x.min(), x.max(), 200)
             coeffs = np.polyfit(x, y, 2)
             trend = np.poly1d(coeffs)(xs)
-            plt.plot(xs, trend, linestyle="--", color="dimgray", linewidth=2,
-                     label="Quadratic Trend")
+            ax.plot(xs, trend, linestyle="--", color="dimgray", linewidth=2,
+                    label="Quadratic Trend")
 
             window = max(5, len(df)//8)
             rolling = pd.Series(y).rolling(window=window, min_periods=1).mean()
-            plt.plot(x, rolling, color="black", linewidth=2,
-                     label=f"{window}-pt Rolling Avg")
+            ax.plot(x, rolling, color="black", linewidth=2,
+                    label=f"{window}-pt Rolling Avg")
 
-        plt.xlabel("Average Temperature (°C)", fontsize=14)
-        plt.title("Crimes vs Temperature (per location/day)", fontsize=18, weight="bold")
+        ax.set_xlabel("Average Temperature (°C)", fontsize=14)
+        ax.set_title("Crimes vs Temperature (per location/day)", fontsize=18, weight="bold")
     else:
         # Fallback to bin-based display
-        plt.figure(figsize=(12, 6))
+        fig, ax = plt.subplots(figsize=(12, 6))
         x = np.arange(len(df_temp))
         y = df_temp[col]
 
-        plt.scatter(x, y, s=200, c=y, cmap="coolwarm", edgecolors="black")
+        ax.scatter(x, y, s=200, c=y, cmap="coolwarm", edgecolors="black")
 
         if len(df_temp) > 1:
             z = np.polyfit(x, y, 1)
             p = np.poly1d(z)
-            plt.plot(x, p(x), linestyle="--", color="gray")
+            ax.plot(x, p(x), linestyle="--", color="gray")
 
-        plt.xticks(x, df_temp["temp_bin"], rotation=15)
-        plt.xlabel("Temperature Bin (°C)", fontsize=14)
-        plt.title("Crimes by Temperature Range", fontsize=18, weight="bold")
+        ax.set_xticks(x)
+        ax.set_xticklabels(df_temp["temp_bin"], rotation=15)
+        ax.set_xlabel("Temperature Bin (°C)", fontsize=14)
+        ax.set_title("Crimes by Temperature Range", fontsize=18, weight="bold")
 
-    plt.ylabel("Total Crimes", fontsize=14)
+    ax.set_ylabel("Crimes per location-day", fontsize=14)
 
-    plt.legend(loc="best", frameon=True, framealpha=0.9, edgecolor="dimgray")
-    plt.grid(axis="both", linestyle=":", alpha=0.4)
-    plt.tight_layout()
-    plt.savefig("temp_vs_crime.png", dpi=300)
-    plt.close()
+    ax.legend(loc="best", frameon=True, framealpha=0.9, edgecolor="dimgray")
+    ax.grid(axis="both", linestyle=":", alpha=0.4)
+    _finalize_figure(fig, "temp_vs_crime.png")
 
 
 # Crime type distribution
@@ -220,10 +227,8 @@ def plot_crimes_vs_wind(df_wind):
         edgecolor="dimgray"
     )
 
-    plt.title("Crime Rate vs Wind Speed (+ cumulative share)", fontsize=18, weight="bold")
-    plt.tight_layout()
-    plt.savefig("wind_vs_crime.png", dpi=300)
-    plt.close()
+    ax1.set_title("Crime Rate vs Wind Speed (+ cumulative share)", fontsize=18, weight="bold")
+    _finalize_figure(fig, "wind_vs_crime.png")
 
 
 def plot_precipitation_effect(df_rain):
@@ -237,30 +242,28 @@ def plot_precipitation_effect(df_rain):
     total = df[col].sum() or 1
     df["pct"] = (df[col] / total) * 100
 
-    plt.figure(figsize=(12, 6))
-    bars = plt.barh(df["rain_level"],
-                    df[col],
-                    color=["#f0c419", "#4aa3df", "#1f4e79"],
-                    edgecolor="black",
-                    alpha=0.9)
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bars = ax.barh(df["rain_level"],
+                   df[col],
+                   color=["#f0c419", "#4aa3df", "#1f4e79"],
+                   edgecolor="black",
+                   alpha=0.9)
 
     for idx, bar in enumerate(bars):
         width = bar.get_width()
         pct = df.iloc[idx]["pct"]
-        plt.text(width + max(width * 0.02, 0.5),
-                 bar.get_y() + bar.get_height()/2,
-                 f"{int(width)} ({pct:.1f}%)",
-                 va="center",
-                 fontsize=12)
+        ax.text(width + max(width * 0.02, 0.5),
+                bar.get_y() + bar.get_height()/2,
+                f"{int(width)} ({pct:.1f}%)",
+                va="center",
+                fontsize=12)
 
-    plt.title("Crime Rate by Rain Level", fontsize=18, weight="bold")
-    plt.xlabel("Crimes w/ same-day weather match", fontsize=14)
-    plt.ylabel("Rain Level", fontsize=14)
-    plt.grid(axis="x", linestyle=":", alpha=0.4)
+    ax.set_title("Crime Rate by Rain Level", fontsize=18, weight="bold")
+    ax.set_xlabel("Crimes w/ same-day weather match", fontsize=14)
+    ax.set_ylabel("Rain Level", fontsize=14)
+    ax.grid(axis="x", linestyle=":", alpha=0.4)
 
-    plt.tight_layout()
-    plt.savefig("precip_vs_crime.png", dpi=300)
-    plt.close()
+    _finalize_figure(fig, "precip_vs_crime.png")
 
 def plot_transit_mode_crimes(df_transit):
     if df_transit is None or df_transit.empty:
@@ -320,9 +323,7 @@ def plot_transit_mode_crimes(df_transit):
     ax1.set_xticklabels(df["mode"], rotation=20)
     ax1.set_title("Crimes Near TfL Transit Modes", fontsize=18, weight="bold")
     ax1.grid(axis="y", linestyle=":", alpha=0.4)
-    plt.tight_layout()
-    plt.savefig("transit_modes.png", dpi=300)
-    plt.close()
+    _finalize_figure(fig, "transit_modes.png")
 
 def plot_transit_hotspots(df_hotspots):
     if df_hotspots is None or df_hotspots.empty:
@@ -334,24 +335,22 @@ def plot_transit_hotspots(df_hotspots):
     labels = df["common_name"].fillna("Unknown Stop")
     colors = plt.cm.magma(np.linspace(0.3, 0.9, len(df)))
 
-    plt.figure(figsize=(12, 7))
-    bars = plt.barh(labels, df["crime_count"], color=colors, edgecolor="black")
+    fig, ax = plt.subplots(figsize=(12, 7))
+    bars = ax.barh(labels, df["crime_count"], color=colors, edgecolor="black")
 
     for idx, bar in enumerate(bars):
         modes = df.iloc[idx]["modes"] or df.iloc[idx]["stop_type"]
-        plt.text(bar.get_width() + max(df["crime_count"].max() * 0.01, 1),
-                 bar.get_y() + bar.get_height()/2,
-                 f"{int(bar.get_width())} crimes\n{modes}",
-                 va="center",
-                 fontsize=10)
+        ax.text(bar.get_width() + max(df["crime_count"].max() * 0.01, 1),
+                bar.get_y() + bar.get_height()/2,
+                f"{int(bar.get_width())} crimes\n{modes}",
+                va="center",
+                fontsize=10)
 
-    plt.xlabel("Crimes within ~1 km", fontsize=14)
-    plt.ylabel("TfL Stop", fontsize=14)
-    plt.title("Top Transit Stops by Nearby Crimes", fontsize=18, weight="bold")
-    plt.grid(axis="x", linestyle=":", alpha=0.4)
-    plt.tight_layout()
-    plt.savefig("transit_hotspots.png", dpi=300)
-    plt.close()
+    ax.set_xlabel("Crimes within ~1 km", fontsize=14)
+    ax.set_ylabel("TfL Stop", fontsize=14)
+    ax.set_title("Top Transit Stops by Nearby Crimes", fontsize=18, weight="bold")
+    ax.grid(axis="x", linestyle=":", alpha=0.4)
+    _finalize_figure(fig, "transit_hotspots.png")
 
 
 # All visualizations 
