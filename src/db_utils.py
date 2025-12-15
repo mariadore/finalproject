@@ -41,7 +41,9 @@ def set_up_database(db_name: str = DB_NAME) -> Tuple[str, sqlite3.Connection]:
             outcome_category TEXT,
             outcome_date TEXT,
             crime_date TEXT,
-            location_id INTEGER
+            location_id INTEGER,
+            FOREIGN KEY (location_id) REFERENCES LocationData(location_id),
+            FOREIGN KEY (street_id) REFERENCES StreetData(street_id)
         );
     """)
 
