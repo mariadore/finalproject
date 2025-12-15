@@ -188,9 +188,11 @@ def plot_crimes_vs_wind(df_wind):
     ax2.set_ylim(0, 105)
 
     for bar in bars:
+        height = bar.get_height()
+        offset = max(height * 0.015, 0.2)
         ax1.text(bar.get_x() + bar.get_width()/2,
-                 bar.get_height() + max(bar.get_height() * 0.02, 0.5),
-                 f"{int(bar.get_height())}",
+                 height + offset,
+                 f"{int(height)}",
                  ha="center",
                  fontsize=10)
 
