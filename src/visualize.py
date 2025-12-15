@@ -28,7 +28,7 @@ def plot_avg_crimes_per_weather(df_weather):
     col = detect_crime_column(df_weather, "avg_crimes_per_day")
     df = df_weather.sort_values(col, ascending=False).reset_index(drop=True)
 
-    fig, ax1 = plt.subplots(figsize=(13, 6))
+    fig, ax1 = plt.subplots(figsize=(13, 7.5))
     colors = plt.cm.Blues(np.linspace(0.4, 0.95, len(df)))
     x = np.arange(len(df))
     bars = ax1.bar(x, df[col],
@@ -39,6 +39,8 @@ def plot_avg_crimes_per_weather(df_weather):
     overall_mean = df[col].mean()
     ax1.axhline(overall_mean, linestyle="--", color="gray", linewidth=1.3, label=f"Overall Avg ({overall_mean:.1f})")
 
+    max_bar = df[col].max() if not df[col].empty else 0
+    ax1.set_ylim(0, max_bar * 1.35 + 0.05)
     ax1.set_title("Crime Rate by Weather Type (bar) + Total Crimes (line)", fontsize=18, weight="bold")
     ax1.set_xlabel("Weather", fontsize=14)
     ax1.set_ylabel("Avg Crimes per Day", fontsize=14, color="midnightblue")
