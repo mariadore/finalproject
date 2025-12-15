@@ -165,7 +165,7 @@ def plot_crimes_vs_wind(df_wind):
 
     df["cumulative_pct"] = df[col].cumsum() / max(df[col].sum(), 1)
 
-    fig, ax1 = plt.subplots(figsize=(12, 6))
+    fig, ax1 = plt.subplots(figsize=(12, 7))
     bars = ax1.bar(df["wind_bin"], df[col],
                    width=0.4,
                    color="#0f8a8a",
@@ -176,6 +176,8 @@ def plot_crimes_vs_wind(df_wind):
     ax1.set_ylabel("Total Crimes", fontsize=14, color="#0f8a8a")
     ax1.tick_params(axis="y", colors="#0f8a8a")
     ax1.grid(axis="y", linestyle=":", alpha=0.4)
+
+    ax1.set_ylim(0, df[col].max() * 1.3 + 1)
 
     ax2 = ax1.twinx()
     ax2.plot(df["wind_bin"], df["cumulative_pct"] * 100,
