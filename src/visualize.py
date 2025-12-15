@@ -60,9 +60,13 @@ def plot_avg_crimes_per_weather(df_weather):
         ax2 = None
 
     for idx, bar in enumerate(bars):
+        value = bar.get_height()
+        if value <= 0:
+            continue
+        offset = max(value * 0.02, 0.02)
         ax1.text(bar.get_x() + bar.get_width()/2,
-                 bar.get_height() + 0.2,
-                 f"{bar.get_height():.1f}",
+                 value + offset,
+                 f"{value:.1f}",
                  ha="center",
                  fontsize=11,
                  color="black")
