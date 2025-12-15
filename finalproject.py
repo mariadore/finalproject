@@ -73,7 +73,7 @@ def _read_counts(cur):
     }
 
 
-def _print_run_summary(start_counts, end_counts):
+def _print_run_summary(start_counts, end_counts, per_run_details=None):
     print("\n=== Run Summary ===")
     rows = [
         ("CrimeData", MIN_CRIME_ROWS),
@@ -86,7 +86,10 @@ def _print_run_summary(start_counts, end_counts):
         after = end_counts.get(table, 0)
         delta = after - before
         status = "✅" if after >= target else "⚠"
-        print(f"{status} {table}: {after}/{target} rows (this run +{max(delta, 0)})")
+        detail = ""
+        if per_run_details and table in per_run_details:
+            detail = per_run_details[table]
+        print(f"{status} {table}: {after}/{target} rows (this run +{max(delta, 0)}) {detail}".strip())
     print("====================\n")
 
 
@@ -103,13 +106,18 @@ def main(month="2023-09", allow_seed=False, show_plots=False):
     transit_count = start_counts["TransitStops"]
 
     # Fetch crime data only if needed
+    per_run_notes = {}
+
     if crime_count < MIN_CRIME_ROWS:
         remaining = MIN_CRIME_ROWS - crime_count
         fetch_limit = min(MAX_API_ITEMS_PER_RUN, remaining)
         print(f"Fetching up to {fetch_limit} crimes (need {remaining} more to hit {MIN_CRIME_ROWS}).")
+        before_crime = crime_count
         fetch_and_store_crimes(conn, month, max_items=fetch_limit)
         cur.execute("SELECT COUNT(*) FROM CrimeData;")
         crime_count = cur.fetchone()[0]
+        inserted = max(crime_count - before_crime, 0)
+        per_run_notes["CrimeData"] = f"[fetched {inserted}/{fetch_limit}]"
         print("Re-run the script as needed to accumulate at least 100 crimes.")
     else:
         print(f"CrimeData already satisfies minimum rows ({crime_count} rows).")
@@ -122,9 +130,11 @@ def main(month="2023-09", allow_seed=False, show_plots=False):
         if released:
             print(f"Released {released} previously defaulted crimes for re-geocoding.")
         print(f"Reverse geocoding up to {per_run} crimes (need {remaining} more locations).")
+        before_loc = loc_count
         geocode_and_attach_locations(conn, max_items=per_run)
         cur.execute("SELECT COUNT(*) FROM LocationData WHERE label != 'DEFAULT_LONDON';")
         loc_count = cur.fetchone()[0]
+        per_run_notes["LocationData"] = f"[geocoded {max(loc_count - before_loc, 0)}/{per_run}]"
         if loc_count < MIN_LOCATION_ROWS:
             print("Re-run the script to continue building LocationData via TomTom.")
     else:
@@ -196,6 +206,7 @@ def main(month="2023-09", allow_seed=False, show_plots=False):
         cycle_modes = config.get("modes")
         print(f"Fetching up to {per_run_transit} TfL stops (need {remaining_transit} more) "
               f"using stop types [{stop_types}] near ({t_lat}, {t_lon}).")
+        before_transit = transit_count
         fetch_transit_stops(
             conn,
             lat=t_lat,
@@ -207,6 +218,7 @@ def main(month="2023-09", allow_seed=False, show_plots=False):
         set_api_cursor(conn, "transit_cycle", str((cycle_index + 1) % len(stop_type_cycle)))
         print("Re-run the script to accumulate at least 100 transit stops.")
         transit_count = get_transit_stop_count(conn)
+        per_run_notes["TransitStops"] = f"[inserted {max(transit_count - before_transit, 0)}/{per_run_transit}]"
     else:
         print("TransitStops already satisfies the minimum rows.")
 
@@ -237,9 +249,11 @@ def main(month="2023-09", allow_seed=False, show_plots=False):
     else:
         per_run = MAX_API_ITEMS_PER_RUN
         print("WeatherData already meets minimum rows; refreshing limited chunk for recency.")
+    before_weather = weather_count
     fetch_weather_for_all_locations(conn, dates=DATES, max_new_records=per_run)
     cur.execute("SELECT COUNT(*) FROM WeatherData;")
     weather_count = cur.fetchone()[0]
+    per_run_notes["WeatherData"] = f"[inserted {max(weather_count - before_weather, 0)}/{per_run}]"
     if weather_count < MIN_WEATHER_ROWS:
         print("Re-run the script to continue gathering weather records without exceeding per-run limits.")
 
@@ -270,7 +284,7 @@ def main(month="2023-09", allow_seed=False, show_plots=False):
     write_analysis_report(REPORT_PATH, df_weather, df_temp, df_types, df_wind, df_rain, df_transit)
 
     end_counts = _read_counts(cur)
-    _print_run_summary(start_counts, end_counts)
+    _print_run_summary(start_counts, end_counts, per_run_details=per_run_notes)
     print("Done! Visualizations saved.")
 
 
