@@ -51,6 +51,8 @@ def parse_args():
                         help="Crime month (YYYY-MM) to download per run.")
     parser.add_argument("--allow-seed", action="store_true",
                         help="Allow synthetic data seeding when APIs cannot satisfy requirements.")
+    parser.add_argument("--show-plots", action="store_true",
+                        help="Display matplotlib windows in addition to saving PNGs.")
     return parser.parse_args()
 
 
@@ -88,7 +90,7 @@ def _print_run_summary(start_counts, end_counts):
     print("====================\n")
 
 
-def main(month="2023-09", allow_seed=False):
+def main(month="2023-09", allow_seed=False, show_plots=False):
     print("Setting up database...")
     db_path, conn = set_up_database()
 
@@ -253,7 +255,16 @@ def main(month="2023-09", allow_seed=False):
 
     # Visualizations
     print("Generating visualizations...")
-    visualize_results(df_weather, df_temp, df_types, df_wind, df_rain, df_transit, df_transit_hotspots)
+    visualize_results(
+        df_weather,
+        df_temp,
+        df_types,
+        df_wind,
+        df_rain,
+        df_transit,
+        df_transit_hotspots,
+        show_plots=show_plots
+    )
 
     print(f"Writing analysis summary to {REPORT_PATH} ...")
     write_analysis_report(REPORT_PATH, df_weather, df_temp, df_types, df_wind, df_rain, df_transit)
@@ -265,4 +276,4 @@ def main(month="2023-09", allow_seed=False):
 
 if __name__ == "__main__":
     args = parse_args()
-    main(month=args.month, allow_seed=args.allow_seed)
+    main(month=args.month, allow_seed=args.allow_seed, show_plots=args.show_plots)
