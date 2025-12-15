@@ -232,6 +232,54 @@ def plot_precipitation_effect(df_rain):
     plt.savefig("precip_vs_crime.png", dpi=300)
     plt.close()
 
+def plot_transit_mode_crimes(df_transit):
+    if df_transit is None or df_transit.empty:
+        print("transit mode df empty → skipping")
+        return
+
+    df = df_transit.copy()
+    df = df.sort_values("crime_count", ascending=False).head(10)
+    if df.empty:
+        print("transit mode df empty → skipping")
+        return
+
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+    colors = plt.cm.Purples(np.linspace(0.35, 0.9, len(df)))
+    bars = ax1.bar(df["mode"], df["crime_count"],
+                   color=colors,
+                   edgecolor="black",
+                   linewidth=0.6,
+                   label="Crime Count")
+    ax1.set_ylabel("Crime Count", fontsize=14, color="#4a148c")
+    ax1.tick_params(axis="y", colors="#4a148c")
+
+    ax2 = ax1.twinx()
+    ax2.plot(df["mode"], df["avg_crimes_per_stop"],
+             color="#ff6f00",
+             marker="o",
+             linewidth=2,
+             label="Avg Crimes per Stop")
+    ax2.set_ylabel("Avg Crimes per Stop", fontsize=14, color="#ff6f00")
+    ax2.tick_params(axis="y", colors="#ff6f00")
+
+    for idx, bar in enumerate(bars):
+        stop_count = int(df.iloc[idx]["stop_count"])
+        ax1.text(bar.get_x() + bar.get_width()/2,
+                 bar.get_height() + max(bar.get_height() * 0.02, 0.5),
+                 f"{int(bar.get_height())} crimes\n{stop_count} stops",
+                 ha="center",
+                 fontsize=10)
+
+    handles1, labels1 = ax1.get_legend_handles_labels()
+    handles2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(handles1 + handles2, labels1 + labels2, loc="upper right")
+    ax1.set_xlabel("Transit Modes", fontsize=14)
+    ax1.set_title("Crimes Near TfL Transit Modes", fontsize=18, weight="bold")
+    ax1.grid(axis="y", linestyle=":", alpha=0.4)
+    plt.tight_layout()
+    plt.savefig("transit_modes.png", dpi=300)
+    plt.close()
+
 def plot_transit_hotspots(df_hotspots):
     if df_hotspots is None or df_hotspots.empty:
         print("transit hotspots empty → skipping")
@@ -270,5 +318,6 @@ def visualize_results(df_weather, df_temp, df_types, df_wind=None, df_rain=None,
     plot_crimes_vs_temperature(df_temp)
     plot_crimes_vs_wind(df_wind)
     plot_precipitation_effect(df_rain)
+    plot_transit_mode_crimes(df_transit)
     plot_transit_hotspots(df_transit_hotspots)
     print("Visualizations saved!")
