@@ -184,9 +184,9 @@ def plot_crimes_vs_wind(df_wind):
                    color="#0f8a8a",
                    edgecolor="black",
                    alpha=0.8,
-                   label="Crime Count")
+                   label="Crimes matched to weather day")
     ax1.set_xlabel("Wind Speed (m/s)", fontsize=14)
-    ax1.set_ylabel("Total Crimes", fontsize=14, color="#0f8a8a")
+    ax1.set_ylabel("Crimes w/ same-day weather match", fontsize=14, color="#0f8a8a")
     ax1.tick_params(axis="y", colors="#0f8a8a")
     ax1.grid(axis="y", linestyle=":", alpha=0.4)
 
@@ -254,7 +254,7 @@ def plot_precipitation_effect(df_rain):
                  fontsize=12)
 
     plt.title("Crime Rate by Rain Level", fontsize=18, weight="bold")
-    plt.xlabel("Total Crimes", fontsize=14)
+    plt.xlabel("Crimes w/ same-day weather match", fontsize=14)
     plt.ylabel("Rain Level", fontsize=14)
     plt.grid(axis="x", linestyle=":", alpha=0.4)
 
@@ -280,8 +280,8 @@ def plot_transit_mode_crimes(df_transit):
                    color=colors,
                    edgecolor="black",
                    linewidth=0.6,
-                   label="Crime Count")
-    ax1.set_ylabel("Crime Count", fontsize=14, color="#4a148c")
+                   label="Crimes within ~1 km of stop")
+    ax1.set_ylabel("Crimes within ~1 km of stop", fontsize=14, color="#4a148c")
     ax1.tick_params(axis="y", colors="#4a148c")
 
     ax2 = ax1.twinx()
@@ -289,8 +289,8 @@ def plot_transit_mode_crimes(df_transit):
              color="#ff6f00",
              marker="o",
              linewidth=2,
-             label="Avg Crimes per Stop")
-    ax2.set_ylabel("Avg Crimes per Stop", fontsize=14, color="#ff6f00")
+             label="Avg nearby crimes per stop")
+    ax2.set_ylabel("Avg nearby crimes per stop", fontsize=14, color="#ff6f00")
     ax2.tick_params(axis="y", colors="#ff6f00")
 
     for idx, bar in enumerate(bars):
