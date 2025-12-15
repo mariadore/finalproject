@@ -53,6 +53,8 @@ def parse_args():
                         help="Allow synthetic data seeding when APIs cannot satisfy requirements.")
     parser.add_argument("--show-plots", action="store_true",
                         help="Display matplotlib windows in addition to saving PNGs.")
+    parser.add_argument("--status", action="store_true",
+                        help="Print current table counts and exit without fetching data.")
     return parser.parse_args()
 
 
@@ -290,4 +292,20 @@ def main(month="2023-09", allow_seed=False, show_plots=False):
 
 if __name__ == "__main__":
     args = parse_args()
-    main(month=args.month, allow_seed=args.allow_seed, show_plots=args.show_plots)
+    if args.status:
+        _, conn = set_up_database()
+        cur = conn.cursor()
+        counts = _read_counts(cur)
+        print("Current table counts:")
+        for name, count in counts.items():
+            target = {
+                "CrimeData": MIN_CRIME_ROWS,
+                "LocationData": MIN_LOCATION_ROWS,
+                "WeatherData": MIN_WEATHER_ROWS,
+                "TransitStops": MIN_TRANSIT_ROWS
+            }[name]
+            status = "✅" if count >= target else "⚠"
+            print(f"  {status} {name}: {count}/{target}")
+        conn.close()
+    else:
+        main(month=args.month, allow_seed=args.allow_seed, show_plots=args.show_plots)
