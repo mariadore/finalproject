@@ -54,22 +54,51 @@ def parse_args():
     return parser.parse_args()
 
 
+def _read_counts(cur):
+    cur.execute("SELECT COUNT(*) FROM CrimeData;")
+    crime = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM LocationData WHERE label != 'DEFAULT_LONDON';")
+    loc = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM WeatherData;")
+    weather = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM TransitStops;")
+    transit = cur.fetchone()[0]
+    return {
+        "CrimeData": crime,
+        "LocationData": loc,
+        "WeatherData": weather,
+        "TransitStops": transit
+    }
+
+
+def _print_run_summary(start_counts, end_counts):
+    print("\n=== Run Summary ===")
+    rows = [
+        ("CrimeData", MIN_CRIME_ROWS),
+        ("LocationData", MIN_LOCATION_ROWS),
+        ("WeatherData", MIN_WEATHER_ROWS),
+        ("TransitStops", MIN_TRANSIT_ROWS)
+    ]
+    for table, target in rows:
+        before = start_counts.get(table, 0)
+        after = end_counts.get(table, 0)
+        delta = after - before
+        status = "✅" if after >= target else "⚠"
+        print(f"{status} {table}: {after}/{target} rows (this run +{max(delta, 0)})")
+    print("====================\n")
+
+
 def main(month="2023-09", allow_seed=False):
     print("Setting up database...")
     db_path, conn = set_up_database()
 
     # Check existing table counts
     cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM CrimeData;")
-    crime_count = cur.fetchone()[0]
-
-    cur.execute("SELECT COUNT(*) FROM LocationData WHERE label != 'DEFAULT_LONDON';")
-    loc_count = cur.fetchone()[0]
-
-    cur.execute("SELECT COUNT(*) FROM WeatherData;")
-    weather_count = cur.fetchone()[0]
-
-    transit_count = get_transit_stop_count(conn)
+    start_counts = _read_counts(cur)
+    crime_count = start_counts["CrimeData"]
+    loc_count = start_counts["LocationData"]
+    weather_count = start_counts["WeatherData"]
+    transit_count = start_counts["TransitStops"]
 
     # Fetch crime data only if needed
     if crime_count < MIN_CRIME_ROWS:
@@ -229,6 +258,8 @@ def main(month="2023-09", allow_seed=False):
     print(f"Writing analysis summary to {REPORT_PATH} ...")
     write_analysis_report(REPORT_PATH, df_weather, df_temp, df_types, df_wind, df_rain, df_transit)
 
+    end_counts = _read_counts(cur)
+    _print_run_summary(start_counts, end_counts)
     print("Done! Visualizations saved.")
 
 
