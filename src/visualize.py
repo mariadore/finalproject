@@ -217,7 +217,7 @@ def plot_precipitation_effect(df_rain):
     total = df[col].sum() or 1
     df["pct"] = (df[col] / total) * 100
 
-    plt.figure(figsize=(11, 5))
+    plt.figure(figsize=(12, 6))
     bars = plt.barh(df["rain_level"],
                     df[col],
                     color=["#f0c419", "#4aa3df", "#1f4e79"],
@@ -227,7 +227,7 @@ def plot_precipitation_effect(df_rain):
     for idx, bar in enumerate(bars):
         width = bar.get_width()
         pct = df.iloc[idx]["pct"]
-        plt.text(width + max(total * 0.01, 1),
+        plt.text(width + max(width * 0.02, 0.5),
                  bar.get_y() + bar.get_height()/2,
                  f"{int(width)} ({pct:.1f}%)",
                  va="center",
