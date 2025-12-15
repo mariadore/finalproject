@@ -10,3 +10,5 @@ __pycache__/
 src/data/crime_weather.db
 data/crime_weather.db
 >>>>>>> c8b8f88 (Clean repo)
+*.db
+__pycache__/
