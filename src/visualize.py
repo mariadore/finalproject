@@ -190,7 +190,7 @@ def plot_crimes_vs_wind(df_wind):
     handles2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(handles1 + handles2, labels1 + labels2, loc="upper left")
 
-    plt.title("Crime Counts vs Wind Speed (+ cumulative share)", fontsize=18, weight="bold")
+    plt.title("Crime Rate vs Wind Speed (+ cumulative share)", fontsize=18, weight="bold")
     plt.tight_layout()
     plt.savefig("wind_vs_crime.png", dpi=300)
     plt.close()
@@ -223,7 +223,7 @@ def plot_precipitation_effect(df_rain):
                  va="center",
                  fontsize=12)
 
-    plt.title("Crime Counts by Rain Level", fontsize=18, weight="bold")
+    plt.title("Crime Rate by Rain Level", fontsize=18, weight="bold")
     plt.xlabel("Total Crimes", fontsize=14)
     plt.ylabel("Rain Level", fontsize=14)
     plt.grid(axis="x", linestyle=":", alpha=0.4)
