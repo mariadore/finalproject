@@ -39,7 +39,7 @@ def plot_avg_crimes_per_weather(df_weather):
     overall_mean = df[col].mean()
     ax1.axhline(overall_mean, linestyle="--", color="gray", linewidth=1.3, label=f"Overall Avg ({overall_mean:.1f})")
 
-    ax1.set_title("Average Crimes per Weather Type (bar) + Total Crimes (line)", fontsize=18, weight="bold")
+    ax1.set_title("Crime Rate by Weather Type (bar) + Total Crimes (line)", fontsize=18, weight="bold")
     ax1.set_xlabel("Weather", fontsize=14)
     ax1.set_ylabel("Avg Crimes per Day", fontsize=14, color="midnightblue")
     ax1.tick_params(axis="y", colors="midnightblue")
