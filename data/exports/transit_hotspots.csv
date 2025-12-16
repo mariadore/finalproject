@@ -1,0 +1,16 @@
+stop_id,common_name,stop_type,modes,lat,lon,crime_count
+4,Piccadilly Circus Underground Station,NaptanMetroStation,tube,51.51005,-0.133798,55
+2,Leicester Square Underground Station,NaptanMetroStation,tube,51.511386,-0.128426,53
+3,Covent Garden Underground Station,NaptanMetroStation,tube,51.513093,-0.124436,50
+1,Tottenham Court Road Underground Station,NaptanMetroStation,tube,51.516426,-0.13041,50
+8,Charing Cross Underground Station,NaptanMetroStation,tube,51.50741,-0.127277,45
+10,Embankment Underground Station,NaptanMetroStation,tube,51.507058,-0.122666,43
+5,Goodge Street Underground Station,NaptanMetroStation,tube,51.520599,-0.134361,41
+64,Synthetic Stop 43,NaptanMetroStation,tube,51.5068,-0.12,40
+79,Synthetic Stop 58,NaptanMetroStation,dlr,51.5068,-0.1182,37
+63,Synthetic Stop 42,NaptanAirAccessArea,cable-car,51.5056,-0.12,36
+6,Holborn Underground Station,NaptanMetroStation,tube,51.51758,-0.120475,35
+7,Oxford Circus Underground Station,NaptanMetroStation,tube,51.515224,-0.141903,34
+78,Synthetic Stop 57,NaptanMetroStation,tube,51.5056,-0.1182,34
+62,Synthetic Stop 41,NaptanFerryPort,river-bus,51.5044,-0.12,30
+94,Synthetic Stop 73,NaptanBusCoachStation,bus,51.5068,-0.1164,29
